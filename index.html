@@ -235,10 +235,10 @@ const R=[
    o:['Absence','Insuffisance (débit / pression)'],
    ow:['Mise à disposition d’une alimentation intérieure en eau potable','Rétablissement d’un débit et d’une pression suffisants'],
    df:[['Source privée non contrôlée','Contrôle de la potabilité de l’eau (analyse)']]},
-  {id:'ecs',t:"Moyen de production d'eau chaude sanitaire",ref:'Décence-3.4, 3.5',p:1,s:'sanit',th:'sanit',tl:'Si présent, type',ty:['Cumulus','Chauffe-eau','Chaudière mixte'],
+  {id:'ecs',t:"Moyen de production d'eau chaude sanitaire",ref:'Décence-3.4, 3.5',p:1,s:'sanit',th:'sanit',tl:'Type',tf:'ecsType',ty:['Cumulus','Chauffe-eau','Chaudière mixte'],
    o:['Absent','Présent mais insuffisant : dispositif absent dans cuisine ou salle de bain','Présent mais insuffisant : installation partiellement fonctionnelle voire non fonctionnelle'],
    ow:['Mise à disposition d’un moyen de production d’eau chaude sanitaire suffisant et sécurisé','Alimentation en eau chaude de la cuisine et de la salle de bains','Remise en état de fonctionnement de la production d’eau chaude sanitaire']},
-  {id:'chauf',t:'Moyen de chauffage',ref:'Décence-3.1',p:1,d:1,s:'equip',th:'chauf',tl:'Si présent, type',ty:['Gaz / fioul','Électrique','Charbon / bois'],
+  {id:'chauf',t:'Moyen de chauffage',ref:'Décence-3.1',p:1,d:1,s:'equip',th:'chauf',tl:'Type',tf:'chaufType',ty:['Gaz / fioul','Électrique','Charbon / bois'],
    o:['Absent','Présent mais insuffisant : dispositif absent dans certaines pièces de vie','Présent mais insuffisant : installation partiellement fonctionnelle voire non fonctionnelle',"Utilisation de chauffages d'appoint / mobiles"],
    ow:['Mise à disposition d’un moyen de chauffage suffisant, sécurisé et adapté aux caractéristiques du logement','Installation d’un équipement de chauffage fixe dans chacune des pièces de vie, permettant un chauffage normal','Remise en état de fonctionnement de l’installation de chauffage',null],
    df:[['Utilisation de chauffages d’appoint en continu (gaz / pétrole)'],['Utilisation de chauffages d’appoint en continu (électriques)']]},
@@ -299,6 +299,8 @@ const R=[
  {id:'r8',n:'8',t:'Travaux préconisés',ic:'trav',pt:'LISTE DE TRAVAUX PRÉCONISÉS DANS LE LOGEMENT',gen:1,fields:[]}
 ];
 const ITEMS={};R.forEach(r=>(r.items||[]).forEach(i=>ITEMS[i.id]=i));
+// Type de chauffage et d'eau chaude : renseigné à chaque visite, en tête de la rubrique 4, sans photo.
+R[3].pre=[['ecsType','Production d’eau chaude sanitaire : type (si présente)','c',ITEMS.ecs.ty],['chaufType','Chauffage : type (si présent)','c',ITEMS.chauf.ty]];
 // Articles du Règlement Sanitaire Départemental des Deux-Sèvres (RSD 79), repris de la fiche DDT.
 const RSD={stab:'RSD art. 33',degr:'RSD art. 33, 35',surf:'RSD art. 27-1, 40-3, 40-4',ecl:'RSD art. 27-2 b, 40-2',pc:'RSD art. 23.2, 32, 57, 60, 75',
  elec:'RSD art. 51',gaz:'RSD art. 52',eau:'RSD art. 14, 15, 40',chauf:'RSD art. 40',co:'RSD art. 31, 53',cuis:'RSD art. 40, 45, 46',wc:'RSD art. 45, 46',
@@ -310,7 +312,7 @@ const on=(v,id)=>!!v.it[id]?.on, has=(v,id,k,i)=>on(v,id)&&v.it[id][k].includes(
 const RAP=[
  ['L’utilisation de chauffages d’appoint à combustion (type poêle à pétrole) doit être limitée (2 h maximum en continu) et dans une pièce correctement ventilée.',v=>has(v,'chauf','o',3)||has(v,'chauf','df',0)||has(v,'prec','o',1)],
  ['Le remplacement du tuyau de raccordement au gaz doit être effectué.',v=>has(v,'gaz','df',0)],
- ['L’entretien annuel des appareils à combustion ainsi que le ramonage annuel des conduits de fumée sont à la charge des occupants (sauf mention contraire dans le bail).',v=>on(v,'co')||has(v,'chauf','t',0)||has(v,'chauf','t',2)],
+ ['L’entretien annuel des appareils à combustion ainsi que le ramonage annuel des conduits de fumée sont à la charge des occupants (sauf mention contraire dans le bail).',v=>on(v,'co')||(v.f.chaufType||[]).some(x=>x!=='Électrique')],
  ['Les bouches d’aération et conduits d’aération doivent être nettoyés et maintenus opérants.',v=>on(v,'vent')||has(v,'co','o',2)||has(v,'prec','o',0)],
  ['Le mode de vie des occupants ne doit pas être la cause d’une dégradation du logement.',()=>false]
 ];
@@ -329,6 +331,7 @@ const isPdl=v=>v.type==='pdl';
 const ADMIN_PDL=[
  ['h','Demande'],
  ['commune','Commune','r',Object.keys(COMMUNES)],
+ ['typeVis','Type de visite','r',['Visite de contrôle','Contre-visite']],
  ['refDos','Référence dossier (N°)','t'],
  ['dateDepot','Date de dépôt (complétude)','d'],
  ['dateDem','Date de la demande (envoi mail à SOLIHA)','d'],
@@ -343,14 +346,16 @@ const ADMIN_PDL=[
  ['h','Logement'],
  ['adresse','Adresse','t'],['cpville','Code postal / Ville','t'],
  ['occ','Logement','r',['Occupé','Vacant']],
- ['h','Contre-visite (à compléter le moment venu)'],
- ['cvDateDem','Date de la demande','d'],['cvDateVis','Date de la contre-visite','d'],['cvDateRap','Date du rapport de contre-visite','d']
+ ['h','Contre-visite',0,0,0,v=>v.f.typeVis==='Contre-visite'],
+ ['cvDateDem','Date de la demande de contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite'],['cvDateVis','Date de la contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite'],['cvDateRap','Date du rapport de contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite']
 ];
 const COMM_PDL=[
  ['etat','État global du logement','r',['Bon','Passable','Mauvais']],
  ['comPriv','Parties privatives','ta'],
  ['comCom','Parties communes','ta']
 ];
+// Signature du propriétaire ou de son représentant : une par visite.
+const sigKey=v=>isCv(v)?'sigPcv':'sigP';
 const PT_PDL={r2:'CONSTATS RELATIFS AU BÂTI, APPARENTS DEPUIS L’EXTÉRIEUR',r3:'CONSTATS RELATIFS À L’AMÉNAGEMENT ET À L’ORGANISATION DU LOGEMENT',
  r4:'CONSTATS RELATIFS AUX ÉQUIPEMENTS DU LOGEMENT',r5:'CONSTATS APPARENTS EN INTÉRIEUR'};
 // Les diagnostics sont fournis avant la visite : pas de constat « absence de diagnostics ».
@@ -362,7 +367,7 @@ const R_PDL=[
   ['lAv49','Période','r',['Avant 1949','Avant 1955','Après 1955']],
   ...R[0].fields.filter(f=>['lSurf','lP9','lNbPP','lNbCh','lNbSdb','lNbCuis','lNbWc','lAutres'].includes(f[0])),
   ['lPresents','Personnes présentes lors de la visite (nom, prénom, qualité)','ta'],
-  ['lPresentsCv','Personnes présentes lors de la contre-visite (nom, prénom, qualité)','ta']
+  ['lPresentsCv','Personnes présentes lors de la contre-visite (nom, prénom, qualité)','ta',0,0,v=>v.f.typeVis==='Contre-visite']
  ]},
  ...R.slice(1,5).map(r=>({...r,pt:PT_PDL[r.id]})),
  {...R[5],items:[
@@ -383,7 +388,9 @@ const R_PDL=[
   ['cvReste','Si non, quels sont les travaux non effectués qui doivent être réalisés ?','ta',0,0,v=>v.f.cvLeve!=='Oui']
  ]}
 ];
-const RR=v=>isPdl(v)?R_PDL:R;
+const isCv=v=>isPdl(v)&&v.f.typeVis==='Contre-visite';
+// Visite de contrôle : la rubrique 8 « Contre-visite » est masquée.
+const RR=v=>isPdl(v)?(isCv(v)?R_PDL:R_PDL.slice(0,7)):R;
 const ADM=v=>isPdl(v)?ADMIN_PDL:ADMIN;
 
 // Correctifs avec leurs règles techniques, utilisés pour le permis de louer (clé = correctif court de la fiche décence).
@@ -461,13 +468,13 @@ function travaux(v){
      'État des risques et pollutions (ERP)','État de l’installation intérieure de gaz, le cas échéant','Diagnostic amiante, le cas échéant (permis de construire antérieur au 1er juillet 1997)'].forEach(x=>push('regl','   ◦ '+x))};
   for(const r of RR(v))for(const d of r.items||[]){
     const s=v.it[d.id];if(!s?.on||!d.th)continue;
-    const subs=[];
-    const add=x=>{if(!x)return;if(x==='DIAG')return diag();Array.isArray(x)?subs.push({th:x[0],t:tk(x[1])}):subs.push({th:d.th,t:tk(x)})};
+    const subs=[],loc=s.loc?.trim()?`${s.loc.trim()} – `:'';
+    const add=x=>{if(!x)return;if(x==='DIAG')return diag();Array.isArray(x)?subs.push({th:x[0],t:loc+tk(x[1])}):subs.push({th:d.th,t:loc+tk(x)})};
     s.o.forEach(i=>add(d.ow?.[i]));s.df.forEach(i=>add(d.df?.[i]?.[1]));(d.wx||[]).forEach(add);
     const main=subs.filter(x=>x.th===d.th);
-    if(d.grp&&d.w){if(main.length){push(d.th,'• '+d.w+' :');main.forEach(x=>push(d.th,'   ◦ '+x.t))}else push(d.th,'• '+tk(d.w))}
+    if(d.grp&&d.w){if(main.length){push(d.th,'• '+loc+d.w+' :');main.forEach(x=>push(d.th,'   ◦ '+x.t.slice(loc.length)))}else push(d.th,'• '+loc+tk(d.w))}
     else if(main.length)main.forEach(x=>push(d.th,'• '+x.t));
-    else if(d.w)push(d.th,'• '+tk(d.w));
+    else if(d.w)push(d.th,'• '+loc+tk(d.w));
     subs.filter(x=>x.th!==d.th).forEach(x=>push(x.th,'• '+x.t));
   }
   if(v.f.detect==='Non')push('sec','• '+tk('Installation d’au moins un détecteur autonome avertisseur de fumée (DAAF) conforme à la norme NF EN 14604'));
@@ -503,6 +510,8 @@ function fusionTravaux(txt,blocks){
   console.assert(m.txt.includes('• Ma ligne perso')&&m.txt.includes('2. Obligations réglementaires')&&fusionTravaux(m.txt,b).added===0,'fusion travaux');
   const p=travaux({type:'pdl',f:{detect:'Non'},it:{chute:{on:true,o:[0],t:[],df:[4],ph:[]},plomb:{on:true,o:[0],t:[],df:[],ph:[]}}});
   const pt=p.flatMap(b=>b.lines).join(' ');
+  const q=travaux({f:{},it:{chute:{on:true,o:[],t:[],df:[4],ph:[],loc:'escalier vers l’étage'},elec:{on:true,o:[0],t:[],df:[],ph:[],loc:'chambre 1'}}}).flatMap(b=>b.lines);
+  console.assert(q.includes('• escalier vers l’étage – Installation d’une main courante dans l’escalier')&&q.some(l=>l.startsWith('• chambre 1 – Mise en sécurité'))&&q.includes('   ◦ Création de prises de courant en nombre suffisant et suppression des surcharges'),'travaux localisation');
   console.assert(pt.includes('90 à 95 cm')&&pt.includes('NF P01-012')&&pt.includes('Certibiocide')===false&&!pt.includes('diagnostic technique'),'travaux pdl');})();
 
 
@@ -539,8 +548,10 @@ const store={db:null,mem:new Map(),
 // Remet à niveau les visites créées par une version précédente.
 function migrate(v){
   v.f=v.f||{};v.it=v.it||{};v.done=v.done||{};
-  if(isPdl(v)){if(!COMMUNES[v.f.commune])v.f.commune='Thouars'}else if(!COM[v.f.dem])v.f.dem='CAF';
-  for(const s of Object.values(v.it)){s.o=s.o||[];s.t=s.t||[];s.df=s.df||[];s.ph=(s.ph||[]).map(p=>({cap:'',...p}));s.note=s.note||''}
+  if(isPdl(v)){if(!COMMUNES[v.f.commune])v.f.commune='Thouars';if(!v.f.typeVis)v.f.typeVis=v.f.cvDateVis?'Contre-visite':'Visite de contrôle'}else if(!COM[v.f.dem])v.f.dem='CAF';
+  for(const s of Object.values(v.it)){s.o=s.o||[];s.t=s.t||[];s.df=s.df||[];s.ph=(s.ph||[]).map(p=>({cap:'',...p}));s.note=s.note||'';s.loc=s.loc||''}
+  // Le type de chauffage / d'eau chaude était saisi dans la pathologie : il passe dans les champs de la rubrique 4.
+  for(const d of [ITEMS.chauf,ITEMS.ecs])if(!v.f[d.tf]&&v.it[d.id]?.t.length)v.f[d.tf]=v.it[d.id].t.map(i=>d.ty[i]);
   return v;
 }
 
@@ -552,10 +563,10 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const today=()=>new Date().toISOString().slice(0,10);
 const frDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.split('-').reverse().join('/'):(d||'');
 const newVisit=t=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),created:Date.now(),updated:Date.now(),
-  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today()}}),it:{},done:{},sig:''});
+  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',typeVis:'Visite de contrôle',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today()}}),it:{},done:{},sig:''});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2600)}
 function save(now){if(!cur)return;cur.updated=Date.now();clearTimeout(saveT);const go=()=>store.put(cur).catch(e=>toast('Enregistrement impossible : '+e.message));if(now)return go();saveT=setTimeout(go,350)}
-const it=(id,v=cur)=>v.it[id]||(v.it[id]={on:false,o:[],t:[],df:[],note:'',d:false,ph:[]});
+const it=(id,v=cur)=>v.it[id]||(v.it[id]={on:false,o:[],t:[],df:[],note:'',loc:'',d:false,ph:[]});
 
 // Numéro de chaque photo dans sa rubrique : « itemId:index » -> 1, 2, 3…
 // Entrées qui portent des photos : pathologies cochées, puis photos propres à la rubrique (commentaires).
@@ -582,8 +593,8 @@ const pills=p=>`<div class="pills">${p.map(([t,c])=>`<span class="pill ${c}">${e
 
 /* ---------- rendu ---------- */
 function field([k,label,type,opts,hint,cond]){
-  if(k==='h')return `<h3>${esc(label)}</h3>`;
   if(cond&&!cond(cur))return '';
+  if(k==='h')return `<h3>${esc(label)}</h3>`;
   const v=cur.f[k];const full=type==='ta'||(type==='c'||type==='r')&&opts.join('').length>40;
   let ctl;
   if(type==='r'||type==='c'){
@@ -607,14 +618,15 @@ function itemHtml(d,nums){
    ${d.norm&&!s.on?`<div class="body">${norm}</div>`:''}
    ${s.on?`<div class="body">
     ${d.hint?`<div class="hint">${esc(d.hint)}</div>`:''}${norm}
-    ${d.ty&&d.tl!==MEL?grp('t',d.tl,d.ty):''}
+    ${d.ty&&d.tl!==MEL&&!d.tf?grp('t',d.tl,d.ty):''}
     ${d.o?grp('o',d.ol||'Constat',d.o):''}
     ${d.ty&&d.tl===MEL?grp('t',d.tl,d.ty):''}
     ${d.df?`<div class="grp"><span>Défauts types (réf. décence)</span>
       <select data-it="${d.id}" data-k="df" aria-label="Ajouter un défaut type"><option value="">+ Ajouter un défaut type…</option>${dfFree.map(([x,i])=>`<option value="${i}">${esc(x[0])}</option>`).join('')}</select>
       ${s.df.length?`<div class="dfs">${s.df.map(i=>`<div class="df"><span>${esc(d.df[i][0])}</span><button type="button" data-act="deldf" data-it="${d.id}" data-i="${i}" aria-label="Retirer ce défaut">${svg('x')}</button></div>`).join('')}</div>`:''}</div>`:''}
     ${d.d?`<label class="dgl"><input type="checkbox" data-it="${d.id}" data-k="d" ${s.d?'checked':''}>Danger</label>`:''}
-    <label class="field"><span>Précisions (3) : localisation, description</span><textarea data-it="${d.id}" data-k="note" placeholder="Ex. : chambre, prise arrachée de son support (voir photo 1)">${esc(s.note)}</textarea></label>
+    <label class="field"><span>Localisation (reprise dans les travaux préconisés)</span><input type="text" data-it="${d.id}" data-k="loc" value="${esc(s.loc)}" placeholder="Ex. : chambre 1, salle d’eau"></label>
+    <label class="field"><span>Précisions (3) : description</span><textarea data-it="${d.id}" data-k="note" placeholder="Ex. : chambre, prise arrachée de son support (voir photo 1)">${esc(s.note)}</textarea></label>
     ${phBlock(d.id,s,nums,d.p&&!s.ph.length)}
    </div>`:''}
   </div>`;
@@ -629,7 +641,7 @@ function topbar(title,sub,back,logo){return `<div class="top">${back?`<button cl
 const who=v=>isPdl(v)?[v.f.adresse,v.f.cpville].filter(Boolean).join(', ')||'Logement non renseigné':[v.f.nom,v.f.prenom].filter(Boolean).join(' ')||'Occupant non renseigné';
 const where=v=>isPdl(v)?(v.f.pNom||v.f.pSoc?'Propriétaire : '+(v.f.pSoc||v.f.pNom):''):[v.f.adresse,v.f.cpville].filter(Boolean).join(', ');
 const logoOf=v=>isPdl(v)?COMMUNES[v.f.commune]?.logo:COM[v.f.dem]?.logo;
-const kind=v=>isPdl(v)?'Permis de louer · '+v.f.commune:(COM[v.f.dem]?.label||'')+' · '+(v.f.typeVis||'');
+const kind=v=>isPdl(v)?'Permis de louer · '+v.f.commune+' · '+(v.f.typeVis||''):(COM[v.f.dem]?.label||'')+' · '+(v.f.typeVis||'');
 
 function render(){
   const app=$('#app'),bar=$('#bar'),bi=$('#barin');bar.hidden=true;
@@ -697,16 +709,22 @@ function render(){
      :`<div class="eyebrow">Caractérisation de la situation et conclusion</div>
      <p class="muted">Plusieurs « oui » peuvent être cochés.</p>
      <div class="form">${CONCL.map(field).join('')}</div>`}
-     <div class="eyebrow">Signature</div>
+     <div class="eyebrow">Signature${pdl?'s – '+esc(cur.f.typeVis):''}</div>
      <div class="sigs" style="margin-top:8px">
+      ${pdl?`<div class="field"><span>Propriétaire ou son représentant</span>
+       <input type="text" data-f="${sigKey(cur)}Nom" value="${esc(cur.f[sigKey(cur)+'Nom'])}" placeholder="Nom, prénom et qualité du signataire" aria-label="Nom du signataire">
+       <canvas class="pad" id="pad" aria-label="Zone de signature du propriétaire ou de son représentant"></canvas>
+       <div class="row"><button data-act="clrosig">Effacer la signature</button></div></div>`:''}
       <div class="field"><span>Enquêteur : ${esc(P.nom||'profil non renseigné')}</span>${P.sig?`<img src="${P.sig.src}" alt="Signature de ${esc(P.nom)}" style="background:var(--paper);border-radius:8px;padding:6px;max-height:150px;object-fit:contain">`:''}
        <div><button data-act="go" data-v="profil">Modifier mon profil</button></div></div>
      </div>`;
+    if(pdl)initPad(cur.f[sigKey(cur)]?.src,(src,r)=>{cur.f[sigKey(cur)]={src,r};save()});
     bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="pdf">${svg('pdf')}Générer le rapport PDF</button>`;
     return;
   }
   const r=RV.find(x=>x.id===view),nums=phNums(r);
   app.innerHTML=`${topbar(r.n+'. '+r.t,who(cur),'dash',logo)}
+   ${r.pre?`<div class="form">${r.pre.map(field).join('')}</div>`:''}
    ${r.items?`<p class="muted">Cochez chaque pathologie constatée. Les autres figureront non cochées dans le rapport.</p><div class="items">${r.items.map(d=>itemHtml(d,nums)).join('')}</div>`:''}
    ${r.gen?`<div class="row" style="margin-bottom:10px"><button class="btn-primary" data-act="gentrav">${svg('sync')}${filled(cur.f.trav)?'Mettre à jour depuis les désordres':'Pré-remplir depuis les désordres'}</button></div>
      <p class="muted">La liste est générée par thème à partir des désordres cochés et des défauts types. Modifiez-la librement : la mise à jour ajoute seulement les correctifs manquants.</p>`:''}
@@ -746,7 +764,7 @@ document.addEventListener('input',e=>{
   if(el.dataset.p){P[el.dataset.p]=el.value.trim();saveP();return}
   if(!cur)return;
   if(el.dataset.f&&!el.dataset.ft){cur.f[el.dataset.f]=el.value;save();return}
-  if(el.dataset.it&&el.dataset.k==='note'){it(el.dataset.it).note=el.value;save()}
+  if(el.dataset.it&&(el.dataset.k==='note'||el.dataset.k==='loc')){it(el.dataset.it)[el.dataset.k]=el.value;save()}
   if(el.dataset.it&&el.dataset.k==='cap'){it(el.dataset.it).ph[+el.dataset.i].cap=el.value;save()}
 });
 document.addEventListener('change',async e=>{
@@ -782,6 +800,7 @@ document.addEventListener('click',async e=>{
   if(a==='delph'){if(!armed(b,'Confirmer'))return;it(b.dataset.it).ph.splice(+b.dataset.i,1);save();return keep()}
   if(a==='deldf'){const s=it(b.dataset.it);s.df=s.df.filter(i=>i!==+b.dataset.i);save();return keep()}
   if(a==='clrpsig'){delete P.sig;saveP();return render()}
+  if(a==='clrosig'){delete cur.f[sigKey(cur)];save();return keep()}
   if(a==='gentrav'){
     const blocks=travaux(cur);
     if(!blocks.length){toast('Aucun désordre coché : rien à pré-remplir');return}
@@ -920,7 +939,7 @@ async function exportPdf(v){
   }
   const flow=items=>{for(const b of blocks(items,CW)){if(y+b.h>BOT)newPage();b.draw(M,y);y+=b.h}};
   const need=h=>{if(y+h>BOT)newPage()};
-  const f=v.f,com=COM[f.dem]||COM.CAF,pdl=isPdl(v),cm=COMMUNES[f.commune]||COMMUNES.Thouars,yn=(val,lo)=>[[val==='Oui',lo?'oui':'Oui'],[val==='Non',lo?'non':'Non']];
+  const f=v.f,com=COM[f.dem]||COM.CAF,pdl=isPdl(v),cv=isCv(v),cm=COMMUNES[f.commune]||COMMUNES.Thouars,yn=(val,lo)=>[[val==='Oui',lo?'oui':'Oui'],[val==='Non',lo?'non':'Non']];
   // Oui = désordre constaté (rouge), Non = conforme (vert).
   const ynC=(val,lo)=>[[val==='Oui',lo?'oui':'Oui',RED],[val==='Non',lo?'non':'Non',OK]];
   // Cellules types : bandeau de titre bleu, libellé sur fond teinté.
@@ -936,10 +955,10 @@ async function exportPdf(v){
        {items:[tx('Rapport de visite',{b:1,sz:17,al:'center',c:ACC}),tx('Autorisation préalable à la mise en location',{b:1,sz:11,al:'center',c:ACC}),gap(2),tx("Visant à caractériser si un logement peut être mis en location à partir d'un constat visuel des désordres susceptibles de relever de l'application du Règlement Sanitaire Départemental et/ou du décret relatif aux caractéristiques du logement décent",{i:1,sz:8,al:'center',c:MUT})],va:'middle'},
        {items:logoItem(cm.logo,40,22),va:'middle'}],[46,96,44],{minH:30,line:false});
   doc.setFillColor(...ACC);doc.rect(M,y+1,CW,.9,'F');y+=4;
-  const rapVis=f.dateRap||(f.cvDateVis?'':today());
+  const rapVis=f.dateRap||(cv?'':today());
   row([{items:[tx('VISITE',{b:1,sz:7,c:ACC}),rt([['Dépôt (complétude) : '],[frDate(f.dateDepot),1]]),rt([['Demande : '],[frDate(f.dateDem),1]]),rt([['Visite : '],[frDate(f.dateVis),1]]),rt([['Rapport : '],[frDate(rapVis),1]])],fill:TINT},
        {items:[tx('RAPPORT ÉTABLI PAR',{b:1,sz:7,c:ACC}),tx(P.nom||'',{b:1,sz:9.5}),tx('Questions techniques sur les travaux préconisés :',{sz:7.5,c:MUT}),tx(`${P.tel||''}  ·  ${P.mail||''}`)],fill:TINT},
-       {items:[tx('CONTRE-VISITE',{b:1,sz:7,c:ACC}),rt([['Demande : '],[frDate(f.cvDateDem),1]]),rt([['Visite : '],[frDate(f.cvDateVis),1]]),rt([['Rapport : '],[frDate(f.cvDateRap||(f.cvDateVis?today():'')),1]])],fill:TINT}],[56,74,56],{line:WHITE,lw:1.6});
+       ...(cv?[{items:[tx('CONTRE-VISITE',{b:1,sz:7,c:ACC}),rt([['Demande : '],[frDate(f.cvDateDem),1]]),rt([['Visite : '],[frDate(f.cvDateVis),1]]),rt([['Rapport : '],[frDate(f.cvDateRap||today()),1]])],fill:TINT}]:[])],cv?[56,74,56]:[56,130],{line:WHITE,lw:1.6});
   y+=4;
   const LW=[38,148];
   row([LB('Référence dossier'),[rt([['N° '],[f.refDos,1]])]],LW);
@@ -947,7 +966,7 @@ async function exportPdf(v){
   row([[rt([['Société : '],[f.pSoc,1]]),rt([['Nom / Prénom : '],[f.pNom,1]]),rt([['Adresse : '],[f.pAdr,1]]),rt([['Tél fixe : '],[f.pTelF,1]]),rt([['Tél portable : '],[f.pTelP,1]]),rt([['Mail : '],[f.pMail,1]])],
        [rt([['Nom de l’agence : '],[f.mAg,1]]),rt([['Nom / Prénom du référent : '],[f.mNom,1]]),rt([['Adresse : '],[f.mAdr,1]]),rt([['Tél fixe : '],[f.mTelF,1]]),rt([['Tél portable : '],[f.mTelP,1]]),rt([['Mail : '],[f.mMail,1]])]],[93,93]);
   row([LB('Logement'),[rt([['Adresse : '],[[f.adresse,f.cpville].filter(Boolean).join(', '),1]]),cbs([[f.occ==='Occupé','Occupé'],[f.occ==='Vacant','Vacant']],{pre:'Occupé ou vacant :'})]],LW);
-  row([LB('Type de visite'),[cbs([[!!f.dateVis,'VISITE DE CONTRÔLE']]),rt([['réalisée le : '],[frDate(f.dateVis),1]],{ind:4}),gap(1),cbs([[!!f.cvDateVis,'CONTRE-VISITE']]),rt([['réalisée le : '],[frDate(f.cvDateVis),1]],{ind:4})]],LW);
+  row([LB('Type de visite'),[cbs([[!cv,'VISITE DE CONTRÔLE']]),rt([['réalisée le : '],[frDate(f.dateVis),1]],{ind:4}),...(cv?[gap(1),cbs([[true,'CONTRE-VISITE']]),rt([['réalisée le : '],[frDate(f.cvDateVis),1]],{ind:4})]:[])]],LW);
   y+=4;
   row([HD('RÉSUMÉ DES ANOMALIES RELEVÉES',{sz:8.5}),
        [...Object.values(SUM).map(l=>tx(l,{al:'right'}))],
@@ -970,7 +989,7 @@ async function exportPdf(v){
         rt([['Autres informations : '],[f.lAutres,1]],{i:1})]],[38,148]);
   y+=3;
   row([LB(['Personnes présentes lors de la visite',tx('(Nom, prénom, qualité)',{i:1,sz:7.5,c:MUT})]),[tx(f.lPresents||'',{b:1})]],[38,148]);
-  row([LB(['Personnes présentes lors de la contre-visite',tx('(Nom, prénom, qualité)',{i:1,sz:7.5,c:MUT})]),[tx(f.lPresentsCv||'',{b:1})]],[38,148]);
+  if(cv)row([LB(['Personnes présentes lors de la contre-visite',tx('(Nom, prénom, qualité)',{i:1,sz:7.5,c:MUT})]),[tx(f.lPresentsCv||'',{b:1})]],[38,148]);
   y+=4;
   }else{
   row([{items:logoItem(LOGO,40,18),va:'middle'},
@@ -1040,13 +1059,13 @@ async function exportPdf(v){
     for(const d of r.items){
       const s=v.it[d.id]||{on:false,o:[],t:[],df:[],note:'',d:false,ph:[]};
       const c1=[cb(s.on,d.t,{b:1,c:s.on?INK:MUT})],c3=[];
-      if(d.ty&&d.tl!==MEL){c1.push(gap(1),tx(d.tl+' :',{i:1,sz:8}));d.ty.forEach((x,i)=>c1.push(cb(s.t.includes(i),x,{ind:2})))}
+      if(d.ty&&d.tl!==MEL){c1.push(gap(1),tx(d.tl+' :',{i:1,sz:8}));d.ty.forEach((x,i)=>c1.push(cb(d.tf?(f[d.tf]||[]).includes(x):s.t.includes(i),x,{ind:2})))}
       if(d.o){if(d.ol)c3.push(tx(d.ol+' :',{i:1}));d.o.forEach((x,i)=>c3.push(cb(s.o.includes(i),x)))}
       if(d.ty&&d.tl===MEL){c3.push(gap(1),tx(d.tl+' :',{i:1}));d.ty.forEach((x,i)=>c3.push(cb(s.t.includes(i),x)))}
       s.df.forEach(i=>c3.push(cb(true,d.df[i][0],{b:1})));
       if(d.norm&&s.on){const m=normeCAF(f.lNbOcc);if(m)c3.push(tx(`Norme CAF pour ${f.lNbOcc} occupant(s) : ${m} m² minimum. Superficie : ${f.lSurf||'non renseignée'} m².`))}
       if(c3.length)c3.push(gap(1));
-      c3.push(rt([['(3) '],[s.on?s.note:'',1]],{c:RED}));
+      c3.push(rt([['(3) '],[s.on?[s.loc,s.note].filter(Boolean).join(' - '):'',1]],{c:RED}));
       if(s.on)s.ph.forEach((p,i)=>{c3.push(gap(1),img(p.src,p.w,p.h,{maxH:62}),rt([[`Photo ${nums[d.id+':'+i]}${p.cap?' : ':''}`],[p.cap,1]],{sz:8,c:MUT}))});
       row([s.on?{items:c1,fill:TINT}:c1,[tx(d.ref||'',{sz:7.5,c:MUT}),...(d.rsd?[gap(1),tx(d.rsd,{sz:7.5,c:MUT})]:[])],c3,d.d?{items:[cb(s.on&&s.d,'',{cc:RED})],va:'middle'}:[]],IW,{keep:70});
     }
@@ -1059,6 +1078,7 @@ async function exportPdf(v){
   need(40);
   row([HD('7 · '+R_PDL[6].pt,{ic:ICP.trav})],[CW]);
   row([travLines(f.trav)],[CW],{minH:40});
+  if(cv){
   y+=4;need(60);
   row([HD('8 · CONTRE-VISITE',{ic:ICP.synth})],[CW]);
   row([LB(`Travaux prescrits dans l’arrêté ${cm.arr} en date du ${frDate(f.cvArrete)||'..................'}`,{va:'top'}),LB('Travaux réalisés par le propriétaire',{va:'top'})],[93,93]);
@@ -1066,12 +1086,16 @@ async function exportPdf(v){
   const n8=phNums(R_PDL[7],v),ph8=(v.it.r8ph?.ph||[]).flatMap((p,i)=>[gap(1),img(p.src,p.w,p.h,{maxH:62}),rt([[`Photo ${n8['r8ph:'+i]}${p.cap?' : ':''}`],[p.cap,1]],{sz:8,c:MUT})]);
   row([[tx(`Les travaux réalisés par le propriétaire permettent-ils de lever les réserves prescrites dans l’arrêté ${cm.arr} en date du ${frDate(f.cvArrete)||'..................'} ?`),cbs([[f.cvLeve==='Oui','Oui',OK],[f.cvLeve==='Non','Non',RED]]),gap(1),
         rt([['Si non, quels sont les travaux non effectués qui doivent être réalisés ? '],[f.cvLeve==='Oui'?'':f.cvReste,1]]),...ph8]],[CW]);
+  }
   y+=4;need(56);
   row([LB('Bailleur ou mandataire (nom de l’agence et nom - prénom du référent)'),[tx([f.mAg,f.mNom].filter(Boolean).join(' - ')||[f.pSoc,f.pNom].filter(Boolean).join(' - '),{b:1})]],[70,116]);
   y+=3;
-  row([LB('Visite de contrôle'),LB('Contre-visite')],[93,93]);
-  const sig=d=>[...(P.sig?[img(P.sig.src,100,100*P.sig.r,{maxW:50,maxH:24})]:[gap(24)]),tx(`${P.nom||''}${d?' - le '+frDate(d):''}`,{al:'center',sz:8,c:MUT})];
-  row([[...sig(f.dateVis)],f.cvDateVis?[...sig(f.cvDateVis)]:[gap(24)]],[93,93],{minH:32});
+  // Une ligne de signatures par visite : enquêteur et propriétaire (ou son représentant).
+  const sig=(sg,nom,d)=>[...(sg?[img(sg.src,100,100*sg.r,{maxW:50,maxH:24})]:[gap(24)]),tx(`${nom||''}${d?' - le '+frDate(d):''}`,{al:'center',sz:8,c:MUT})];
+  const sigRow=(t,d,k)=>{need(46);row([LB(`Signatures - ${t}`)],[CW]);
+    row([[tx('Enquêteur',{b:1,sz:7.5,c:ACC}),...sig(P.sig,P.nom,d)],[tx('Propriétaire ou son représentant',{b:1,sz:7.5,c:ACC}),...sig(f[k],f[k+'Nom'],f[k]?d:'')]],[93,93],{minH:34})};
+  sigRow('Visite de contrôle',f.dateVis,'sigP');
+  if(cv){y+=2;sigRow('Contre-visite',f.cvDateVis,'sigPcv')}
   y+=3;flow([tx(ORTHI,{sz:7,c:MUT})]);
   }else{
   /* --- rubriques 7 et 8 --- */
