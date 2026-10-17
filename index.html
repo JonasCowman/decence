@@ -265,13 +265,13 @@ const R=[
    ow:['Suppression des fuites et des causes d’infiltration','Traitement des remontées d’humidité en pied de murs',null],
    wx:['Remise en état des revêtements de murs, sols et plafonds détériorés par l’humidité, après assèchement des supports'],
    df:[['Suintements'],['Auréoles'],['Moisissures','Décontamination fongique des supports colonisés par des moisissures'],['Champignons','Traitement des champignons et remplacement des éléments atteints'],['Condensation','Amélioration de la ventilation et du chauffage pour supprimer la condensation'],['Origine suspectée : tellurisme (bas des murs)','Traitement des remontées capillaires']]},
-  {id:'vent',t:'Ventilation insuffisante',ref:'RSD-40.1, Décence-2.6',p:1,s:'hum',th:'vent',grp:1,tl:'Type de ventilation',ty:['Pièce par pièce (5)','Balayage (6)','VMC'],ol:'Insuffisante dans',
+  {id:'vent',t:'Ventilation insuffisante',ref:'Décence-2.6',p:1,s:'hum',th:'vent',grp:1,tl:'Type de ventilation',ty:['Pièce par pièce (5)','Balayage (6)','VMC'],ol:'Insuffisante dans',
    w:'Mise en place d’une ventilation permanente du logement',
    o:['Cuisine',"Salle d'eau",'WC'],
    ow:['Extraction d’air dans la cuisine','Extraction d’air dans la salle d’eau','Extraction d’air dans les WC'],
    hint:"Pièce par pièce : 2 ventilations (haute et basse) ou une ventilation haute et un ouvrant sur l'extérieur (WC et salle de bain). Balayage : arrivée d'air neuf dans les pièces principales, sortie d'air vicié par les pièces de service.",
    df:[['Absence d’entrées d’air dans les pièces principales','Entrées d’air dans les menuiseries des pièces principales'],['Grilles absentes','Pose des grilles de ventilation manquantes'],['Grilles obstruées ou non entretenues','Dégagement et nettoyage des grilles de ventilation'],['Grilles non adaptées','Remplacement des grilles non adaptées'],['Détalonnage insuffisant des portes intérieures','Détalonnage des portes intérieures pour permettre le passage de l’air'],['VMC présente mais non fonctionnelle','Remise en état de fonctionnement de la VMC']]},
-  {id:'chute',t:'Risques de chutes : absence ou fragilité de garde-corps, absence de rambarde, marches irrégulières',ref:'RSD-32, Décence-2.3',p:1,d:1,s:'habit',th:'sec',
+  {id:'chute',t:'Risques de chutes : absence ou fragilité de garde-corps, absence de rambarde, marches irrégulières',ref:'Décence-2.3',p:1,d:1,s:'habit',th:'sec',
    o:['Escalier / palier','Fenêtres aux étages'],
    ow:['Mise en sécurité de l’escalier / du palier : pose ou fixation du garde-corps et de la main courante','Mise en place de garde-corps réglementaires aux fenêtres des étages'],
    df:[['Garde-corps mal fixé ou fragile','Refixation solide ou remplacement du garde-corps'],['Espacements du garde-corps trop importants','Mise en conformité du garde-corps (espacements réglementaires)'],['Hauteur d’échappée insuffisante','Reprise de l’escalier pour assurer une hauteur d’échappée de 1,90 m'],['Marches irrégulières ou dégradées','Remise en état des marches de l’escalier']]},
@@ -292,10 +292,15 @@ const R=[
   {id:'nuis',t:'Présence de nuisibles',p:1,s:'habit',th:'nuis',tl:'Nature',ty:['Insectes','Rongeurs','Oiseaux'],
    w:'Lutte efficace contre les nuisibles (dératisation, désinsectisation, désinfection) par une entreprise spécialisée'}
  ]},
- {id:'r7',n:'7',t:'Commentaires',ic:'comm',pt:'COMMENTAIRES (Recueil des observations des personnes habitant le logement, du bailleur ou de son représentant et si besoin du syndic de la copropriété)',fields:[['comm',"Observations des occupants, du bailleur ou de son représentant et, si besoin, du syndic de copropriété",'ta']]},
+ {id:'r7',n:'7',t:'Commentaires',ic:'comm',phId:'r7ph',pt:'COMMENTAIRES (Recueil des observations des personnes habitant le logement, du bailleur ou de son représentant et si besoin du syndic de la copropriété)',fields:[['comm',"Observations des occupants, du bailleur ou de son représentant et, si besoin, du syndic de copropriété",'ta']]},
  {id:'r8',n:'8',t:'Travaux préconisés',ic:'trav',pt:'LISTE DE TRAVAUX PRÉCONISÉS DANS LE LOGEMENT',gen:1,fields:[]}
 ];
 const ITEMS={};R.forEach(r=>(r.items||[]).forEach(i=>ITEMS[i.id]=i));
+// Articles du Règlement Sanitaire Départemental des Deux-Sèvres (RSD 79), repris de la fiche DDT.
+const RSD={stab:'RSD art. 33',degr:'RSD art. 33, 35',surf:'RSD art. 27-1, 40-3, 40-4',ecl:'RSD art. 27-2 b, 40-2',pc:'RSD art. 23.2, 32, 57, 60, 75',
+ elec:'RSD art. 51',gaz:'RSD art. 52',eau:'RSD art. 14, 15, 40',chauf:'RSD art. 40',co:'RSD art. 31, 53',cuis:'RSD art. 40, 45, 46',wc:'RSD art. 45, 46',
+ eu:'RSD art. 42, 43, 44, 48, 49, 50',hum:'RSD art. 23-1, 27-2 a, 33',vent:'RSD art. 23-1, 24, 40-1',chute:'RSD art. 32'};
+for(const [k,v] of Object.entries(RSD))ITEMS[k].rsd=v;
 
 // Rappels aux occupants (fiche du Nord) et désordres qui les suggèrent.
 const on=(v,id)=>!!v.it[id]?.on, has=(v,id,k,i)=>on(v,id)&&v.it[id][k].includes(i);
@@ -416,7 +421,9 @@ function save(now){if(!cur)return;cur.updated=Date.now();clearTimeout(saveT);con
 const it=(id,v=cur)=>v.it[id]||(v.it[id]={on:false,o:[],t:[],df:[],note:'',d:false,ph:[]});
 
 // Numéro de chaque photo dans sa rubrique : « itemId:index » -> 1, 2, 3…
-function phNums(r,v=cur){const m={};let n=0;for(const d of r.items||[]){const s=v.it[d.id];if(s?.on)s.ph.forEach((p,i)=>m[d.id+':'+i]=++n)}return m}
+// Entrées qui portent des photos : pathologies cochées, puis photos propres à la rubrique (commentaires).
+const phIds=(r,v)=>[...(r.items||[]).filter(d=>v.it[d.id]?.on).map(d=>d.id),...(r.phId&&v.it[r.phId]?[r.phId]:[])];
+function phNums(r,v=cur){const m={};let n=0;for(const id of phIds(r,v))v.it[id].ph.forEach((p,i)=>m[id+':'+i]=++n);return m}
 
 /* ---------- statuts ---------- */
 const filled=x=>Array.isArray(x)?x.length>0:x!==undefined&&x!==null&&String(x).trim()!=='';
@@ -459,7 +466,7 @@ function itemHtml(d,nums){
   const dfFree=(d.df||[]).map((x,i)=>[x,i]).filter(([,i])=>!s.df.includes(i));
   return `<div class="item ${s.on?'on':''} ${s.on&&s.d?'dg':''}" id="it_${d.id}">
    <label class="head"><input type="checkbox" data-it="${d.id}" data-k="on" ${s.on?'checked':''}>
-    <div class="t">${esc(d.t)}<div class="meta">${d.ref?`<span class="ref">${esc(d.ref)}</span>`:''}${d.p?`<span class="ref">Photo requise</span>`:''}${s.on&&s.ph.length?`<span class="ref">${s.ph.length} photo${s.ph.length>1?'s':''}</span>`:''}</div></div></label>
+    <div class="t">${esc(d.t)}<div class="meta">${d.ref?`<span class="ref">${esc(d.ref)}</span>`:''}${d.rsd?`<span class="ref">${esc(d.rsd)}</span>`:''}${d.p?`<span class="ref">Photo requise</span>`:''}${s.on&&s.ph.length?`<span class="ref">${s.ph.length} photo${s.ph.length>1?'s':''}</span>`:''}</div></div></label>
    ${d.norm&&!s.on?`<div class="body">${norm}</div>`:''}
    ${s.on?`<div class="body">
     ${d.hint?`<div class="hint">${esc(d.hint)}</div>`:''}${norm}
@@ -471,15 +478,16 @@ function itemHtml(d,nums){
       ${s.df.length?`<div class="dfs">${s.df.map(i=>`<div class="df"><span>${esc(d.df[i][0])}</span><button type="button" data-act="deldf" data-it="${d.id}" data-i="${i}" aria-label="Retirer ce défaut">${svg('x')}</button></div>`).join('')}</div>`:''}</div>`:''}
     ${d.d?`<label class="dgl"><input type="checkbox" data-it="${d.id}" data-k="d" ${s.d?'checked':''}>Danger</label>`:''}
     <label class="field"><span>Précisions (3) : localisation, description</span><textarea data-it="${d.id}" data-k="note" placeholder="Ex. : chambre, prise arrachée de son support (voir photo 1)">${esc(s.note)}</textarea></label>
-    <div class="grp"><span>Photos${d.p&&!s.ph.length?' <span class="need">— à joindre impérativement</span>':''}</span>
-     <div class="phs">${s.ph.map((p,i)=>`<div class="phc"><img src="${p.src}" alt="Photo ${nums[d.id+':'+i]}">
-       <div class="cap"><div class="tools"><b>Photo ${nums[d.id+':'+i]}</b><button type="button" data-act="delph" data-it="${d.id}" data-i="${i}">Supprimer</button></div>
-       <textarea data-it="${d.id}" data-k="cap" data-i="${i}" placeholder="Légende : ce que montre la photo">${esc(p.cap)}</textarea></div></div>`).join('')}
-      <div class="cams"><label class="btn cam">${svg('cam')}Prendre une photo<input type="file" accept="image/*" capture="environment" data-photo="${d.id}"></label>
-      <label class="btn cam">${svg('plus')}Depuis la galerie<input type="file" accept="image/*" multiple data-photo="${d.id}"></label></div></div></div>
+    ${phBlock(d.id,s,nums,d.p&&!s.ph.length)}
    </div>`:''}
   </div>`;
 }
+function phBlock(id,s,nums,need){return `<div class="grp"><span>Photos${need?' <span class="need">— à joindre impérativement</span>':''}</span>
+     <div class="phs">${s.ph.map((p,i)=>`<div class="phc"><img src="${p.src}" alt="Photo ${nums[id+':'+i]}">
+       <div class="cap"><div class="tools"><b>Photo ${nums[id+':'+i]}</b><button type="button" data-act="delph" data-it="${id}" data-i="${i}">Supprimer</button></div>
+       <textarea data-it="${id}" data-k="cap" data-i="${i}" placeholder="Légende : ce que montre la photo">${esc(p.cap)}</textarea></div></div>`).join('')}
+      <div class="cams"><label class="btn cam">${svg('cam')}Prendre une photo<input type="file" accept="image/*" capture="environment" data-photo="${id}"></label>
+      <label class="btn cam">${svg('plus')}Depuis la galerie<input type="file" accept="image/*" multiple data-photo="${id}"></label></div></div></div>`}
 function topbar(title,sub,back,logo){return `<div class="top">${back?`<button class="btn-icon" data-act="${back}" aria-label="Retour">${svg('back')}</button>`:''}<div class="grow"><h1>${esc(title)}</h1>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div>${logo?`<img class="com" src="${logo}" alt="${esc(cur.f.dem)}">`:''}</div>`}
 const who=v=>[v.f.nom,v.f.prenom].filter(Boolean).join(' ')||'Occupant non renseigné';
 const where=v=>[v.f.adresse,v.f.cpville].filter(Boolean).join(', ');
@@ -557,7 +565,8 @@ function render(){
    ${r.items?`<p class="muted">Cochez chaque pathologie constatée. Les autres figureront non cochées dans le rapport.</p><div class="items">${r.items.map(d=>itemHtml(d,nums)).join('')}</div>`:''}
    ${r.gen?`<div class="row" style="margin-bottom:10px"><button class="btn-primary" data-act="gentrav">${svg('sync')}${filled(cur.f.trav)?'Mettre à jour depuis les désordres':'Pré-remplir depuis les désordres'}</button></div>
      <p class="muted">La liste est générée par thème à partir des désordres cochés et des défauts types. Modifiez-la librement : la mise à jour ajoute seulement les correctifs manquants.</p>`:''}
-   ${r.fields?`<div class="form" style="margin-top:14px">${r.fields.map(field).join('')}</div>`:''}`;
+   ${r.fields?`<div class="form" style="margin-top:14px">${r.fields.map(field).join('')}</div>`:''}
+   ${r.phId?phBlock(r.phId,it(r.phId),nums,false):''}`;
   bar.hidden=false;
   const ri=R.indexOf(r),next=R[ri+1];
   bi.innerHTML=`<button data-act="markdone" data-r="${r.id}">${cur.done[r.id]?'✓ Rubrique vérifiée':'Marquer comme vérifiée'}</button>
@@ -672,9 +681,9 @@ function zip(files){
 const fname=s=>String(s||'').replace(/[\/\\:*?"<>|\n\r\t]+/g,'-').replace(/\s+/g,' ').trim();
 function exportPhotos(v){
   const dossier=fname(`Visite décence ${frDate(v.f.dateVis||today()).replaceAll('/','-')} ${v.f.nom||'logement'}`),files=[];
-  for(const r of R){const nums=phNums(r,v);for(const d of r.items||[]){const s=v.it[d.id];if(!s?.on)continue;
-    s.ph.forEach((p,i)=>{const cap=fname(p.cap).slice(0,60);
-      files.push({name:`${dossier}/R${r.n} Photo ${nums[d.id+':'+i]}${cap?' - '+cap:''}.jpg`,data:Uint8Array.from(atob(p.src.split(',')[1]),c=>c.charCodeAt(0))})})}}
+  for(const r of R){const nums=phNums(r,v);for(const id of phIds(r,v)){
+    v.it[id].ph.forEach((p,i)=>{const cap=fname(p.cap).slice(0,60);
+      files.push({name:`${dossier}/R${r.n} Photo ${nums[id+':'+i]}${cap?' - '+cap:''}.jpg`,data:Uint8Array.from(atob(p.src.split(',')[1]),c=>c.charCodeAt(0))})})}}
   if(!files.length){toast('Aucune photo dans cette visite');return}
   offer(dossier+'.zip',zip(files));
 }
@@ -705,6 +714,8 @@ async function exportPdf(v){
 
   const tx=(s,o={})=>({t:'txt',s,...o}),cb=(on,s,o={})=>({t:'cb',on,s,...o}),cbs=(list,o={})=>({t:'cbs',list,...o}),gap=h=>({t:'gap',h});
   const img=(src,w,h,o={})=>({t:'img',src,w,h,...o});
+  // Texte saisi par l'enquêteur en gras : rt([['Libellé : '],[valeur,1]]).
+  const rt=(segs,o={})=>({t:'rt',segs:segs.map(([a,b])=>[a??'',b]),...o});
   // Transforme le contenu d'une cellule en blocs d'une ligne, pour pouvoir couper une ligne de tableau entre deux pages.
   function blocks(items,w){
     const out=[];
@@ -713,6 +724,11 @@ async function exportPdf(v){
       if(o.t==='gap'){out.push({h:o.h,draw(){}});continue}
       if(o.t==='txt'){for(const p of T(o.s).split('\n')){font(sz,st);const ls=p.trim()?doc.splitTextToSize(p,w-ind):[''];
         for(const ln of ls)out.push({h:lh,draw(x,yy){font(sz,st,c);const al=o.al||'left';doc.text(ln,al==='center'?x+w/2:al==='right'?x+w:x+ind,yy+lh*.78,{align:al})}})}continue}
+      if(o.t==='rt'){const toks=[];for(const [str,b] of o.segs)for(const k of T(str).split(/(\n| +)/))if(k)toks.push({k,b});
+        const fs=b=>b?(st.includes('italic')?'bolditalic':'bold'):st,lines=[[]];let cw=0;
+        for(const t of toks){if(t.k==='\n'){lines.push([]);cw=0;continue}const sp=/^ +$/.test(t.k);font(sz,fs(t.b));const tw=doc.getTextWidth(t.k);
+          if(cw+tw>w-ind&&lines.at(-1).length&&!sp){lines.push([]);cw=0}if(sp&&!lines.at(-1).length)continue;lines.at(-1).push({...t,tw});cw+=tw}
+        for(const L of lines)out.push({h:lh,draw(x,yy){let xx=x+ind;for(const t of L){font(sz,fs(t.b),c);doc.text(t.k,xx,yy+lh*.78);xx+=t.tw}}});continue}
       if(o.t==='cb'){if(!o.s){out.push({h:lh,draw(x,yy){box(x+(w-2.5)/2,yy+lh*.78,o.on)}});continue}
         font(sz,st);const ls=doc.splitTextToSize(T(o.s),w-ind-3.6);
         ls.forEach((ln,k)=>out.push({h:lh,draw(x,yy){if(!k)box(x+ind,yy+lh*.78,o.on);font(sz,st,c);doc.text(ln,x+ind+3.6,yy+lh*.78)}}));continue}
@@ -758,20 +774,20 @@ async function exportPdf(v){
   row([{items:logoItem(LOGO,40,18),va:'middle'},
        {items:[tx('Diagnostic Constat décence',{b:1,sz:13,al:'center'}),gap(2.5),tx("Visant à caractériser un logement dégradé à partir d'un constat visuel des désordres susceptibles de relever de l'application du Règlement Sanitaire Départemental et/ou du décret relatif aux caractéristiques du logement décent",{i:1,sz:8.5,al:'center'})],va:'middle'},
        {items:logoItem(com.logo,38,26),va:'middle'}],[46,96,44],{minH:30});
-  row([[tx('Date demande : '+frDate(f.dateDem)),gap(1.5),tx('Date visite : '+frDate(f.dateVis)),gap(1.5),tx('Date rapport : '+frDate(today()))],
+  row([[rt([['Date demande : '],[frDate(f.dateDem),1]]),gap(1.5),rt([['Date visite : '],[frDate(f.dateVis),1]]),gap(1.5),rt([['Date rapport : '],[frDate(today()),1]])],
        [tx('Rapport établi par : '+(P.nom||''),{b:1}),tx('Pour les questions techniques relatives aux travaux préconisés :',{b:1}),tx(`Téléphone : ${P.tel||''} // Mail : ${P.mail||''}`),tx('Pour toutes autres questions : '+ADIL,{b:1,c:RED})],[]],[46,96,44]);
   y+=4;
   /* --- informations administratives --- */
   const LW=[38,148];
   row([[tx('Demandeur',{b:1})],[cbs(Object.keys(COM).map(k=>[f.dem===k,COM[k].label]))]],LW);
-  row([[tx('Référence dossier',{b:1})],[isCAF(v)?tx(`Matricule CAF : ${f.matricule||''}          N° allocataire : ${f.alloc||''}`):tx(f.refDos||'')]],LW);
-  row([[tx('Occupant-Adresse',{b:1}),gap(2),tx("Date d'entrée dans les lieux :",{b:1}),tx(frDate(f.dateEntree))],
-       [tx(`Nom : ${f.nom||''}     Prénom : ${f.prenom||''}     Loyer : ${f.loyer?f.loyer+' €':''}     Aide : ${f.aide?f.aide+' €':''}`),
-        tx(`Adresse : ${f.adresse||''}     Ville/CP : ${f.cpville||''}`),
-        tx(`Bât/rés : ${f.bat||''}     Entrée : ${f.entree||''}     Étage : ${f.etage||''}     N° de la maison dans la courée : ${f.couree||''}`),
-        tx(`Tél fixe : ${f.telFixe||''}     Tél portable : ${f.telPort||''}     Mail : ${f.mail||''}`)]],LW);
+  row([[tx('Référence dossier',{b:1})],[isCAF(v)?rt([['Matricule CAF : '],[f.matricule,1],['          N° allocataire : '],[f.alloc,1]]):rt([[f.refDos,1]])]],LW);
+  row([[tx('Occupant-Adresse',{b:1}),gap(2),tx("Date d'entrée dans les lieux :",{b:1}),tx(frDate(f.dateEntree),{b:1})],
+       [rt([['Nom : '],[f.nom,1],['     Prénom : '],[f.prenom,1],['     Loyer : '],[f.loyer?f.loyer+' €':'',1],['     Aide : '],[f.aide?f.aide+' €':'',1]]),
+        rt([['Adresse : '],[f.adresse,1],['     Ville/CP : '],[f.cpville,1]]),
+        rt([['Bât/rés : '],[f.bat,1],['     Entrée : '],[f.entree,1],['     Étage : '],[f.etage,1],['     N° de la maison dans la courée : '],[f.couree,1]]),
+        rt([['Tél fixe : '],[f.telFixe,1],['     Tél portable : '],[f.telPort,1],['     Mail : '],[f.mail,1]])]],LW);
   const bt=f.bailType||[];
-  row([[cb(bt.includes('Propriétaire(s)'),'Propriétaire(s)',{b:1}),gap(1),cb(bt.includes('Gestionnaire(s)'),'Gestionnaire(s)',{b:1})],[tx('Nom, prénom, adresse, n° de téléphone : '+(f.bailCoord||''))]],LW);
+  row([[cb(bt.includes('Propriétaire(s)'),'Propriétaire(s)',{b:1}),gap(1),cb(bt.includes('Gestionnaire(s)'),'Gestionnaire(s)',{b:1})],[rt([['Nom, prénom, adresse, n° de téléphone : '],[f.bailCoord,1]])]],LW);
   row([{items:[tx('Type de visite',{b:1})],va:'middle'},[cb(f.typeVis==='Visite initiale','VISITE INITIALE'),gap(1),cb(f.typeVis==='Visite de contrôle','VISITE DE CONTRÔLE')]],LW);
   row([{items:[tx('RÉSUMÉ DES DÉSORDRES RELEVÉS',{b:1})],fill:GRAY,va:'middle'},
        [...Object.values(SUM).map(l=>tx(l,{al:'right'}))],
@@ -790,16 +806,16 @@ async function exportPdf(v){
   /* --- rubrique 1 --- */
   const lt=f.lType||[];
   row([{items:[tx('1/ LOGEMENT',{b:1})],fill:GRAY,va:'middle'},
-       [cbs([[lt.includes('Individuel'),'individuel'],[lt.includes('Meublé'),'meublé'],[lt.includes('Collectif'),'collectif,']]),tx('nombre de logements : '+(f.lNbLog||''),{i:1})],
+       [cbs([[lt.includes('Individuel'),'individuel'],[lt.includes('Meublé'),'meublé'],[lt.includes('Collectif'),'collectif,']]),rt([['nombre de logements : '],[f.lNbLog,1]],{i:1})],
        [tx('Date construction : '+(f.lConstr||''),{b:1}),cbs([[f.lAv49==='Avant 1949','<1949'],[f.lAv49==='Après 1949','>1949'],[f.lAv49==='NSP','NSP']])]],[38,98,50]);
-  row([{items:[tx('Superficie :',{b:1}),gap(4),tx((f.lSurf||'')+'  m²',{al:'center',sz:10})]},
+  row([{items:[tx('Superficie :',{b:1}),gap(4),tx((f.lSurf||'')+'  m²',{al:'center',sz:10,b:1})]},
        [cbs(yn(f.lP9,1),{pre:'Présence d’au moins une pièce principale (2) de plus de 9 m² :'}),
-        tx(`Nombre : - de pièce(s) principale(s) : ${f.lNbPP||''}   dont chambre(s) : ${f.lNbCh||''}`),
-        tx(`- de salle(s) de bain : ${f.lNbSdb||''} ; de cuisine(s) : ${f.lNbCuis||''} ; de WC : ${f.lNbWc||''}`,{ind:12}),
-        cbs(yn(f.lAnim,1),{pre:'Présence d’animaux dans le logement :'}),tx('(préciser) : '+(f.lAnimP||''),{i:1}),
-        tx('Autres informations : '+(f.lAutres||''),{i:1})]],[38,148]);
-  row([[cbs(yn(f.lBail,1),{pre:'Bail écrit :'}),cbs(yn(f.lEdl,1),{pre:'État des lieux d’entrée :'}),tx('(si oui, que révèle-t-il sur l’état du logement ?) : '+(f.lEdlP||''),{i:1})]],[CW]);
-  row([[tx("Nombre d'occupants : "+(f.lNbOcc||''))],[tx('Adultes (indiquer les âges) : '+(f.lAdultes||''))],[tx('Enfants (indiquer les âges) : '+(f.lEnfants||''))]],[50,68,68]);
+        rt([['Nombre : - de pièce(s) principale(s) : '],[f.lNbPP,1],['   dont chambre(s) : '],[f.lNbCh,1]]),
+        rt([['- de salle(s) de bain : '],[f.lNbSdb,1],[' ; de cuisine(s) : '],[f.lNbCuis,1],[' ; de WC : '],[f.lNbWc,1]],{ind:12}),
+        cbs(yn(f.lAnim,1),{pre:'Présence d’animaux dans le logement :'}),rt([['(préciser) : '],[f.lAnimP,1]],{i:1}),
+        rt([['Autres informations : '],[f.lAutres,1]],{i:1})]],[38,148]);
+  row([[cbs(yn(f.lBail,1),{pre:'Bail écrit :'}),cbs(yn(f.lEdl,1),{pre:'État des lieux d’entrée :'}),rt([['(si oui, que révèle-t-il sur l’état du logement ?) : '],[f.lEdlP,1]],{i:1})]],[CW]);
+  row([[rt([["Nombre d'occupants : "],[f.lNbOcc,1]])],[rt([['Adultes (indiquer les âges) : '],[f.lAdultes,1]])],[rt([['Enfants (indiquer les âges) : '],[f.lEnfants,1]])]],[50,68,68]);
   y+=3;
   row([[tx('Personnes présentes lors de l’enquête',{b:1}),tx('(Nom, prénom, qualité)',{i:1,sz:7.5})],[tx(f.lPresents||'',{b:1})]],[38,148]);
   y+=4;
@@ -821,20 +837,21 @@ async function exportPdf(v){
       if(d.ty&&d.tl!==MEL){c1.push(gap(1),tx(d.tl+' :',{i:1,sz:8}));d.ty.forEach((x,i)=>c1.push(cb(s.t.includes(i),x,{ind:2})))}
       if(d.o){if(d.ol)c3.push(tx(d.ol+' :',{i:1}));d.o.forEach((x,i)=>c3.push(cb(s.o.includes(i),x)))}
       if(d.ty&&d.tl===MEL){c3.push(gap(1),tx(d.tl+' :',{i:1}));d.ty.forEach((x,i)=>c3.push(cb(s.t.includes(i),x)))}
-      s.df.forEach(i=>c3.push(cb(true,d.df[i][0])));
+      s.df.forEach(i=>c3.push(cb(true,d.df[i][0],{b:1})));
       if(d.norm&&s.on){const m=normeCAF(f.lNbOcc);if(m)c3.push(tx(`Norme CAF pour ${f.lNbOcc} occupant(s) : ${m} m² minimum. Superficie : ${f.lSurf||'non renseignée'} m².`))}
       if(c3.length)c3.push(gap(1));
-      c3.push(tx('(3) '+(s.on?s.note||'':''),{c:RED}));
-      if(s.on)s.ph.forEach((p,i)=>{c3.push(gap(1),img(p.src,p.w,p.h,{maxH:62}),tx(`Photo ${nums[d.id+':'+i]}${p.cap?' : '+p.cap:''}`,{i:1,sz:8}))});
-      row([c1,[tx(d.ref||'')],c3,d.d?{items:[cb(s.on&&s.d,'')],va:'middle'}:[]],IW,{keep:70});
+      c3.push(rt([['(3) '],[s.on?s.note:'',1]],{c:RED}));
+      if(s.on)s.ph.forEach((p,i)=>{c3.push(gap(1),img(p.src,p.w,p.h,{maxH:62}),rt([[`Photo ${nums[d.id+':'+i]}${p.cap?' : ':''}`],[p.cap,1]],{sz:8}))});
+      row([c1,[tx(d.ref||''),...(d.rsd?[gap(1),tx(d.rsd)]:[])],c3,d.d?{items:[cb(s.on&&s.d,'')],va:'middle'}:[]],IW,{keep:70});
     }
-    if(r.id==='r4')row([[tx('Installation de détecteur de fumée :'),cbs(yn(f.detect))],[tx('Article R129-12')],[tx('Nombre de détecteur de fumée : '+(f.detectNb??''))],[]],IW);
+    if(r.id==='r4')row([[tx('Installation de détecteur de fumée :'),cbs(yn(f.detect))],[tx('Article R129-12')],[rt([['Nombre de détecteur de fumée : '],[f.detectNb,1]])],[]],IW);
     notes(r.id==='r3'?[2,3]:r.id==='r6'?[3,4,5,6,7]:[3]);
   }
   /* --- rubriques 7 et 8 --- */
   need(40);
   row([{items:[tx('7/ '+R[6].pt,{b:1})],fill:GRAY}],[CW]);
-  row([[tx(f.comm||'')]],[CW],{minH:30});
+  const n7=phNums(R[6],v),ph7=(v.it.r7ph?.ph||[]).flatMap((p,i)=>[gap(1),img(p.src,p.w,p.h,{maxH:62}),tx(`Photo ${n7['r7ph:'+i]}${p.cap?' : '+p.cap:''}`,{sz:8})]);
+  row([[tx(f.comm||''),...ph7]],[CW],{minH:30});
   if(isCAF(v)){y+=2;flow([tx("« Les informations collectées sur le logement peuvent faire l’objet d’un traitement informatique par la caisse d’allocations familiales ou dans le cadre de l’outil de repérage et de traitement de l’habitat indigne (ORTHI). Ces informations peuvent être transmises aux institutions compétentes en matière d’habitat indigne : agence régionale de santé, collectivités territoriales, Fonds de solidarité logement et être utilisées aux fins d’études, d’enquêtes et de sondages. Vous pouvez exercer votre droit d’accès et de rectification auprès du directeur de la Caf (demande formulée par courrier postal accompagnée d’une preuve d’identité) et dans le cadre d’ORTHI auprès du préfet du département où se situe le logement selon les modalités prévues par l'article 5 de l'arrêté du 30 septembre 2011 portant création d'un traitement de données à caractère personnel relatif à l'habitat indigne et non décent. »",{sz:7,b:1})])}
   newPage();
   row([{items:[tx('8/ '+R[7].pt,{b:1})],fill:GRAY}],[CW]);
