@@ -525,7 +525,7 @@ function render(){
       ${R.map(r=>tile(r.id,'RUBRIQUE '+r.n,r.t,r.ic,rstat(r))).join('')}
       ${tile('synth','CONCLUSION','Synthèse et signatures','synth',[[cur.f.cNd?'Non-décence : '+cur.f.cNd:'À faire',cur.f.cNd==='Oui'?'danger':cur.f.cNd?'ok':'']])}
      </div>`;
-    bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="pdf">${svg('pdf')}Générer le rapport PDF</button>`;
+    bar.hidden=false;bi.innerHTML=`<button data-act="zipph">${svg('cam')}Exporter les photos</button><button class="btn-primary" data-act="pdf">${svg('pdf')}Générer le rapport PDF</button>`;
     return;
   }
   if(view==='admin'){
@@ -639,6 +639,7 @@ document.addEventListener('click',async e=>{
   }
   if(a==='pdf'){await save(true);if(!P.nom){toast('Renseignez d’abord votre profil : il figure sur le rapport');view='profil';return go()}return exportPdf(cur).catch(err=>toast('PDF impossible : '+err.message))}
   if(a==='export')return exportJson();
+  if(a==='zipph')return exportPhotos(cur);
 });
 // Suppression en deux temps : le premier appui arme le bouton, le second confirme.
 function armed(b,label){if(b.classList.contains('armed'))return true;b.classList.add('armed');const old=b.textContent;b.textContent=label;setTimeout(()=>{b.classList.remove('armed');b.textContent=old},3000);return false}
@@ -651,6 +652,32 @@ async function offer(filename,blob){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 const slug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_|_$/g,'');
+// Archive .zip sans compression (les JPEG sont déjà compressés) : à l'ouverture, le téléphone en fait un dossier.
+const CRC=new Uint32Array(256).map((_,n)=>{let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;return c>>>0});
+const crc32=b=>{let c=~0;for(const x of b)c=CRC[(c^x)&255]^(c>>>8);return ~c>>>0};
+function zip(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const d=new Date(),time=d.getHours()<<11|d.getMinutes()<<5|d.getSeconds()>>1,date=d.getFullYear()-1980<<9|d.getMonth()+1<<5|d.getDate();
+  for(const f of files){
+    const name=enc.encode(f.name),crc=crc32(f.data),n=f.data.length;
+    const head=(sig,extra)=>{const h=new DataView(new ArrayBuffer(extra?46:30));let p=0;const u16=v=>{h.setUint16(p,v,true);p+=2},u32=v=>{h.setUint32(p,v,true);p+=4};
+      u32(sig);if(extra)u16(20);u16(20);u16(0x0800);u16(0);u16(time);u16(date);u32(crc);u32(n);u32(n);u16(name.length);u16(0);
+      if(extra){u16(0);u16(0);u16(0);u32(0);u32(off)}return new Uint8Array(h.buffer)};
+    cd.push(head(0x02014b50,1),name);parts.push(head(0x04034b50),name,f.data);off+=30+name.length+n;
+  }
+  const cdSize=cd.reduce((a,b)=>a+b.length,0),end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cdSize,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cd,end],{type:'application/zip'});
+}
+const fname=s=>String(s||'').replace(/[\/\\:*?"<>|\n\r\t]+/g,'-').replace(/\s+/g,' ').trim();
+function exportPhotos(v){
+  const dossier=fname(`Visite décence ${frDate(v.f.dateVis||today()).replaceAll('/','-')} ${v.f.nom||'logement'}`),files=[];
+  for(const r of R){const nums=phNums(r,v);for(const d of r.items||[]){const s=v.it[d.id];if(!s?.on)continue;
+    s.ph.forEach((p,i)=>{const cap=fname(p.cap).slice(0,60);
+      files.push({name:`${dossier}/R${r.n} Photo ${nums[d.id+':'+i]}${cap?' - '+cap:''}.jpg`,data:Uint8Array.from(atob(p.src.split(',')[1]),c=>c.charCodeAt(0))})})}}
+  if(!files.length){toast('Aucune photo dans cette visite');return}
+  offer(dossier+'.zip',zip(files));
+}
 function exportJson(){offer(`sauvegarde_constats_${today()}.json`,new Blob([JSON.stringify({app:'constat-decence',v:2,visits})],{type:'application/json'}))}
 async function importJson(el){
   const f=el.files[0];el.value='';if(!f)return;
