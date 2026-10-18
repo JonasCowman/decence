@@ -138,10 +138,10 @@ const L_THO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWoAAACICAYAAADOI6HeA
 
 const ADIL="ADIL au 05.49.28.08.08";
 const COM={
- 'CAF':{label:'CAF des Deux-Sèvres',logo:L_CAF,foot:'CAF des Deux-Sèvres'},
- 'DDT 79':{label:'DDT 79',logo:L_DDT,foot:'DDT 79'},
- 'Mairie':{label:'Mairie',logo:L_SME,foot:'Mairie de Saint-Maixent-l’École'},
- 'Collectivité':{label:'Collectivité',logo:L_AGG,foot:'Agglo Bocage Bressuirais'}
+ 'CAF':{lettre:'la CAF des Deux-Sèvres',label:'CAF des Deux-Sèvres',logo:L_CAF,foot:'CAF des Deux-Sèvres'},
+ 'DDT 79':{lettre:'la Direction Départementale des Territoires des Deux-Sèvres',label:'DDT 79',logo:L_DDT,foot:'DDT 79'},
+ 'Mairie':{lettre:'la Ville de Saint-Maixent-l’École',label:'Mairie',logo:L_SME,foot:'Mairie de Saint-Maixent-l’École'},
+ 'Collectivité':{lettre:'l’Agglomération du Bocage Bressuirais',label:'Collectivité',logo:L_AGG,foot:'Agglo Bocage Bressuirais'}
 };
 
 const YN=['Oui','Non'];
@@ -151,19 +151,25 @@ const ADMIN=[
  ['h','Demande'],
  ['dem','Commanditaire','r',Object.keys(COM)],
  ['dateDem','Date de la demande','d'],
- ['dateVis','Date de la visite','d'],
+ ['dateVis','Date de la visite','d'],['heureVis','Heure de la visite','tm'],
  ['typeVis','Type de visite','r',['Visite initiale','Visite de contrôle']],
  ['alloc','N° allocataire','t'],
- ['refDos','Référence dossier','t',0,0,v=>!isCAF(v)],
+ ['refDos','Référence dossier','t'],
  ['h','Occupant'],
- ['nom','Nom','t'],['prenom','Prénom','t'],
+ ['civ','Civilité','r',['Monsieur','Madame']],['nom','Nom','t'],['prenom','Prénom','t'],
  ['loyer','Loyer (€)','n'],['aide','Aide (€)','n'],
  ['adresse','Adresse (avec bât., entrée, étage, n° dans la courée)','t'],['cp','Code postal','t'],['ville','Ville','t'],
  ['telFixe','Tél. fixe','tel'],['telPort','Tél. portable','tel'],['mail','E-mail','email'],
  ['dateEntree',"Date d'entrée dans les lieux",'d'],
  ['h','Propriétaire / gestionnaire'],
  ['bailType','Qualité','c',['Propriétaire(s)','Gestionnaire(s)']],
- ['bailCoord','Nom, prénom, adresse, n° de téléphone','ta']
+ ['pCiv','Civilité','r',['Monsieur','Madame','Madame, Monsieur']],['pNom','Nom','t'],['pPrenom','Prénom','t'],
+ ['pAdr','Adresse','t'],['pCp','Code postal','t'],['pVille','Ville','t'],['pTel','Téléphone','tel'],['pMail','E-mail','email'],
+ ['bailCoord','Coordonnées saisies dans une version précédente','ta',0,0,v=>!!v.f.bailCoord],
+ ['h','Mairie (courrier d’information)'],
+ ['mrCiv','Civilité','r',['Madame, Monsieur','Madame la Maire','Monsieur le Maire']],
+ ['mrVille','Ville','t',0,'Reprise de la ville du logement. Les coordonnées d’une mairie déjà connue sont reprises du carnet des mairies.'],
+ ['mrAdr','Adresse','t'],['mrCp','Code postal','t'],['mrMail','E-mail','email']
 ];
 const SUM={bati:'Le bâti',habit:"L'habitabilité, le confort, l'entretien",equip:'Les équipements électriques et de chauffage',sanit:'Les sanitaires',hum:"L'humidité et l'aération"};
 const CONCL=[
@@ -715,8 +721,9 @@ const store={db:null,mem:new Map(),
  async all(){return this.db?await this.tx('readonly',s=>s.getAll()):[...this.mem.values()]},
  async put(v){if(!this.db){this.mem.set(v.id,v);return}await this.tx('readwrite',s=>s.put(v))},
  async del(id){if(!this.db){this.mem.delete(id);return}await this.tx('readwrite',s=>s.delete(id))},
- async getProfil(){return this.db?(await this.tx('readonly',s=>s.get('moi'),'profil'))||{id:'moi'}:this.mem.get('__moi')||{id:'moi'}},
- async putProfil(p){if(!this.db){this.mem.set('__moi',p);return}await this.tx('readwrite',s=>s.put(p),'profil')}
+ async getRec(id){return this.db?(await this.tx('readonly',s=>s.get(id),'profil'))||{id}:this.mem.get('__'+id)||{id}},
+ async putRec(p){if(!this.db){this.mem.set('__'+p.id,p);return}await this.tx('readwrite',s=>s.put(p),'profil')},
+ getProfil(){return this.getRec('moi')},putProfil(p){return this.putRec(p)}
 };
 // Remet à niveau les visites créées par une version précédente.
 function migrate(v){
@@ -744,7 +751,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const today=()=>new Date().toISOString().slice(0,10);
 const frDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.split('-').reverse().join('/'):(d||'');
 const newVisit=t=>({dfTxt:1,dfV:2,id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),created:Date.now(),updated:Date.now(),
-  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',cp:COMMUNES.Thouars.cp,ville:COMMUNES.Thouars.ville,typeVis:'Visite de contrôle',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today()}}),it:{},done:{},sig:''});
+  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',cp:COMMUNES.Thouars.cp,ville:COMMUNES.Thouars.ville,typeVis:'Visite de contrôle',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today(),mrCiv:'Madame, Monsieur'}}),it:{},done:{},sig:''});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2600)}
 function save(now){if(!cur)return;cur.updated=Date.now();clearTimeout(saveT);const go=()=>store.put(cur).catch(e=>toast('Enregistrement impossible : '+e.message));if(now)return go();saveT=setTimeout(go,350)}
 const itemOf=id=>RR(cur).flatMap(r=>r.items||[]).find(d=>d.id===id);
@@ -783,7 +790,7 @@ function field([k,label,type,opts,hint,cond]){
     ctl=`<div class="chips" role="group" aria-label="${esc(label)}">${opts.map(o=>{const ch=type==='r'?v===o:(v||[]).includes(o);
       return `<label class="chip"><input type="${type==='r'?'radio':'checkbox'}" name="${k}" data-f="${k}" data-ft="${type}" value="${esc(o)}" ${ch?'checked':''}>${esc(k==='dem'?COM[o].label:o)}</label>`}).join('')}</div>`;
   }else if(type==='ta')ctl=`<textarea id="f_${k}" data-f="${k}" ${k==='trav'?'class="big"':''}>${esc(v)}</textarea>`;
-  else{const t={t:'text',n:'number',d:'date',tel:'tel',email:'email'}[type];
+  else{const t={t:'text',n:'number',d:'date',tm:'time',tel:'tel',email:'email'}[type];
     ctl=`<input id="f_${k}" type="${t}" data-f="${k}" value="${esc(v)}" ${type==='n'?'inputmode="decimal" step="any"':''}>`}
   return `<div class="field ${full?'full':''}"><span>${esc(label)}</span>${ctl}${hint?`<div class="hint">${esc(hint)}</div>`:''}</div>`;
 }
@@ -839,7 +846,7 @@ function render(){
        ${isPdl(v)?'':`<button data-act="ctrl" data-id="${v.id}">Créer la visite de contrôle</button>`}
        <button class="btn-danger" data-act="delv" data-id="${v.id}">Supprimer</button></div></div>`).join('')
       :`<div class="empty"><strong>Aucune visite pour l'instant.</strong><br>Touchez « Nouvelle visite » pour commencer par les informations administratives.</div>`}</div>
-     <div class="row"><button data-act="go" data-v="profil">${svg('admin')}Mon profil${P.nom?' : '+esc(P.nom):''}</button><button data-act="export">Exporter une sauvegarde (.json)</button>
+     <div class="row"><button data-act="go" data-v="profil">${svg('admin')}Mon profil${P.nom?' : '+esc(P.nom):''}</button><button data-act="go" data-v="mairies">Carnet des mairies (${Object.keys(MAIRIES.l).length})</button><button data-act="export">Exporter une sauvegarde (.json)</button>
       <label class="btn">Importer une sauvegarde<input type="file" accept=".json,application/json" data-import hidden></label></div>`;
     bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="new">${svg('plus')}Nouvelle visite</button>`;
     return;
@@ -848,6 +855,31 @@ function render(){
     const t=(k,ic,l,d)=>`<button class="tile" data-act="newt" data-t="${k}"><img class="ic" src="${ICO[ic]}" alt=""><span class="lbl">${l}</span><span class="muted">${d}</span></button>`;
     app.innerHTML=`${topbar('Nouvelle visite','Choisissez le type de visite','list')}
      <div class="tiles">${t('dec','logement','Contrôle décence','Constat de décence : CAF, DDT 79, mairie, collectivité')}${t('pdl','admin','Permis de louer','Autorisation préalable à la mise en location : Thouars, Saint-Maixent-l’École')}</div>`;
+    return;
+  }
+  if(view==='mairies'){
+    const L=Object.entries(MAIRIES.l).sort((a,b)=>a[1].ville.localeCompare(b[1].ville,'fr'));
+    const inp=(k,m,c,l,t='text')=>`<div class="field"><span>${l}</span><input type="${t}" data-mr="${esc(k)}" data-mk="${c}" value="${esc(m[c])}"></div>`;
+    app.innerHTML=`${topbar('Carnet des mairies','Mémorisé sur cet appareil, repris dans les courriers',cur?'dash':'list')}
+     <p class="muted">Une mairie est ajoutée automatiquement quand vous saisissez ses coordonnées dans une visite. Le carnet est inclus dans la sauvegarde (.json).</p>
+     <div class="visits">${L.length?L.map(([k,m])=>`<div class="visit"><div class="name">Mairie de ${esc(m.ville)}</div>
+       <div class="form" style="margin:0">${inp(k,m,'civ','Civilité')}${inp(k,m,'adr','Adresse')}${inp(k,m,'cp','Code postal')}${inp(k,m,'mail','E-mail','email')}</div>
+       <div class="row"><button class="btn-danger" data-act="delmairie" data-k="${esc(k)}">Supprimer</button></div></div>`).join('')
+      :'<div class="empty">Aucune mairie enregistrée pour l’instant.</div>'}</div>`;
+    bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="${cur?'dash':'list'}">Terminé</button>`;
+    return;
+  }
+  if(view==='courriers'){
+    const L=lettres(cur);
+    app.innerHTML=`${topbar('Courriers d’information',who(cur),'dash',logoOf(cur))}
+     <p class="muted">Courriers annonçant la visite au propriétaire, au locataire et à la mairie. Ils reprennent les informations administratives.</p>
+     <div class="visits">${L.map(l=>`<div class="visit"><div><div class="name">${l.titre}</div>
+       <div class="muted">${esc(l.dest.filter(x=>String(x||'').trim()).join(' · ')||'Destinataire non renseigné')}</div>
+       <div class="muted">${l.mail?esc(l.mail):'E-mail non renseigné'}</div>
+       ${l.manque.length?`<div class="hint warn" style="margin-top:6px">À compléter : ${esc(l.manque.join(', '))}</div>`:''}</div>
+       <div class="row"><button data-act="lettre" data-k="${l.k}">${svg('pdf')}PDF</button><button class="btn-primary" data-act="envoi" data-k="${l.k}">Envoyer par mail</button>${l.mail?`<button data-act="copymail" data-k="${l.k}">Copier l’adresse</button>`:''}</div></div>`).join('')}</div>
+     <div class="row"><button data-act="go" data-v="admin">Modifier les informations</button></div>`;
+    bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="zipcour">${svg('pdf')}Tous les courriers (.zip)</button>`;
     return;
   }
   if(view==='profil'){
@@ -870,6 +902,7 @@ function render(){
     app.innerHTML=`${topbar(who(cur),[cur.f.typeVis,where(cur)].filter(Boolean).join(' · '),'list',logo)}
      <div class="tiles">
       ${tile('admin','INFOS','Informations administratives','admin',[[aN?`${aN} champs`:'À faire',aN?'info':'']])}
+      ${pdl?'':tile('courriers','AVANT LA VISITE','Courriers d’information','comm',[[(n=>n?`${n} à compléter`:'Prêts')(lettres(cur).filter(l=>l.manque.length).length),lettres(cur).some(l=>l.manque.length)?'warn':'ok']])}
       ${RV.map(r=>tile(r.id,'RUBRIQUE '+r.n,r.t,r.ic,rstat(r))).join('')}
       ${pdl?tile('synth','SYNTHÈSE','Résumé et commentaires','comm',[[cur.f.etat?'État : '+cur.f.etat:'À faire',{Bon:'ok',Passable:'warn',Mauvais:'danger'}[cur.f.etat]||'']])
        :tile('synth','CONCLUSION','Synthèse et signature','synth',[[cur.f.cNd?'Non-décence : '+cur.f.cNd:'À faire',cur.f.cNd==='Oui'?'danger':cur.f.cNd?'ok':'']])}
@@ -945,8 +978,9 @@ const keep=()=>{const y=scrollY;render();scrollTo(0,y)};
 document.addEventListener('input',e=>{
   const el=e.target;
   if(el.dataset.p){P[el.dataset.p]=el.value.trim();saveP();return}
+  if(el.dataset.mr){const m=MAIRIES.l[el.dataset.mr];if(m){m[el.dataset.mk]=el.value;m.maj=today();saveMairies()}return}
   if(!cur)return;
-  if(el.dataset.f&&!el.dataset.ft){cur.f[el.dataset.f]=el.value;save();return}
+  if(el.dataset.f&&!el.dataset.ft){cur.f[el.dataset.f]=el.value;save();if(/^mr/.test(el.dataset.f))memoMairie(cur);return}
   if(el.dataset.it&&(el.dataset.k==='note'||el.dataset.k==='loc')){it(el.dataset.it)[el.dataset.k]=el.value;save()}
   if(el.dataset.it&&el.dataset.k==='cap'){it(el.dataset.it).ph[+el.dataset.i].cap=el.value;save()}
 });
@@ -955,7 +989,13 @@ document.addEventListener('change',async e=>{
   if(el.dataset.import!==undefined)return importJson(el);
   if(el.dataset.psig!==undefined){const f=el.files[0];el.value='';if(!f)return;try{const p=await shrink(f);P.sig={src:p.src,r:p.h/p.w};await saveP();render()}catch(err){toast('Image non importée : '+err.message)}return}
   if(!cur)return;
-  if(el.dataset.ft==='r'){cur.f[el.dataset.f]=el.value;
+  // Ville du logement : la mairie destinataire suit, et ses coordonnées sont reprises du carnet.
+  if(!isPdl(cur)&&!el.dataset.ft&&['ville','cp','mrVille'].includes(el.dataset.f)){const f=cur.f,avant=f.mrVille+'|'+f.mrCp;
+    if(el.dataset.f!=='mrVille'&&!f.mrAdr&&!f.mrMail){f.mrVille=f.ville||'';f.mrCp=f.cp||''}
+    const rep=repriseMairie(cur);save();
+    // Réaffiche sans perdre le champ en cours de saisie.
+    if(rep||avant!==f.mrVille+'|'+f.mrCp){const id=document.activeElement?.id;keep();if(id)$('#'+id)?.focus()}return}
+  if(el.dataset.ft==='r'){cur.f[el.dataset.f]=el.value;if(el.dataset.f==='mrCiv')memoMairie(cur);
     if(el.dataset.f==='commune'&&(!cur.f.cp||Object.values(COMMUNES).some(c=>c.cp===cur.f.cp))){cur.f.cp=COMMUNES[el.value].cp;cur.f.ville=COMMUNES[el.value].ville}
     save();keep();return}
   if(el.dataset.ft==='c'){const a=cur.f[el.dataset.f]=(cur.f[el.dataset.f]||[]).filter(x=>x!==el.value);if(el.checked)a.push(el.value);save();return}
@@ -1000,6 +1040,11 @@ document.addEventListener('click',async e=>{
   }
   if(a==='pdf'){await save(true);if(!P.nom){toast('Renseignez d’abord votre profil : il figure sur le rapport');view='profil';return go()}return exportPdf(cur).catch(err=>toast('PDF impossible : '+err.message))}
   if(a==='export')return exportJson();
+  if(a==='delmairie'){if(!armed(b,'Confirmer la suppression'))return;delete MAIRIES.l[b.dataset.k];saveMairies();return render()}
+  if(['lettre','envoi','zipcour'].includes(a)){await save(true);if(!window.jspdf){toast("Le module PDF n'est pas chargé : ouvrez l'application une fois avec internet.");return}
+    if(!P.nom){toast('Renseignez d’abord votre profil : il figure sur les courriers');view='profil';return go()}
+    try{if(a==='lettre')await telechargerLettre(cur,b.dataset.k);else if(a==='envoi')await envoyerLettre(cur,b.dataset.k);else await zipLettres(cur)}catch(err){toast('Courrier impossible : '+err.message)}return}
+  if(a==='copymail'){const l=lettres(cur).find(x=>x.k===b.dataset.k);try{await navigator.clipboard.writeText(l.mail);toast('Adresse copiée')}catch(e){toast(l.mail)}return}
   if(a==='zipph')return exportPhotos(cur);
 });
 // Suppression en deux temps : le premier appui arme le bouton, le second confirme.
@@ -1039,13 +1084,105 @@ function exportPhotos(v){
   if(!files.length){toast('Aucune photo dans cette visite');return}
   offer(dossier+'.zip',zip(files));
 }
-function exportJson(){offer(`sauvegarde_constats_${today()}.json`,new Blob([JSON.stringify({app:'constat-decence',v:2,visits})],{type:'application/json'}))}
+function exportJson(){offer(`sauvegarde_constats_${today()}.json`,new Blob([JSON.stringify({app:'constat-decence',v:2,visits,mairies:MAIRIES.l})],{type:'application/json'}))}
 async function importJson(el){
   const f=el.files[0];el.value='';if(!f)return;
   try{const d=JSON.parse(await f.text());if(d.app!=='constat-decence'||!Array.isArray(d.visits))throw new Error('ce fichier n’est pas une sauvegarde de cette application');
     let n=0;for(const v of d.visits){if(!v||typeof v.id!=='string'||typeof v.f!=='object'||typeof v.it!=='object')continue;await store.put(migrate(v));n++}
-    visits=(await store.all()).map(migrate);render();toast(`${n} visite${n>1?'s':''} importée${n>1?'s':''}`)}
+    let nm=0;if(d.mairies&&typeof d.mairies==='object')for(const [k,m] of Object.entries(d.mairies))if(m&&typeof m.ville==='string'&&!MAIRIES.l[k]){MAIRIES.l[k]=m;nm++}
+    if(nm)saveMairies();
+    visits=(await store.all()).map(migrate);render();toast(`${n} visite${n>1?'s':''} importée${n>1?'s':''}${nm?` · ${nm} mairie${nm>1?'s':''} ajoutée${nm>1?'s':''} au carnet`:''}`)}
   catch(e){toast('Import impossible : '+e.message)}
+}
+
+
+/* ---------- carnet des mairies ---------- */
+// Coordonnées des mairies mémorisées par ville (« St Maixent » = « Saint-Maixent »), sur cet appareil.
+let MAIRIES={id:'mairies',l:{}},mairT=null;
+const mkey=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\b(st|ste)\b/g,m=>m==='st'?'saint':'sainte').replace(/[^a-z0-9]+/g,' ').trim();
+console.assert(mkey('St-Maixent l’École')===mkey('SAINT MAIXENT L\'ECOLE')&&mkey('Trayes')==='trayes','mkey');
+const saveMairies=()=>{clearTimeout(mairT);mairT=setTimeout(()=>store.putRec(MAIRIES).catch(e=>toast('Carnet des mairies non enregistré : '+e.message)),400)};
+// Retient la mairie de la visite dès qu'elle a une adresse ou un e-mail.
+function memoMairie(v){const f=v.f,k=mkey(f.mrVille);if(isPdl(v)||!k||!(f.mrAdr||f.mrMail))return;
+  MAIRIES.l[k]={ville:f.mrVille.trim(),cp:f.mrCp||'',civ:f.mrCiv||'',adr:f.mrAdr||'',mail:f.mrMail||'',maj:today()};saveMairies()}
+// Reprend la mairie du carnet si celle de la visite n'est pas encore renseignée.
+function repriseMairie(v){const f=v.f,m=MAIRIES.l[mkey(f.mrVille)];if(!m||f.mrAdr||f.mrMail)return false;
+  Object.assign(f,{mrCiv:m.civ||f.mrCiv,mrAdr:m.adr,mrCp:m.cp||f.mrCp,mrMail:m.mail});toast(`Coordonnées de la mairie de ${m.ville} reprises du carnet`);return true}
+
+/* ---------- courriers d'information (constat décence) ---------- */
+const SOLIHA_ADR='SOLIHA 17-79 · 6 Route de La Rochelle · 79000 Bessines · Tél. 05.35.00.16.02';
+const PDFT=s=>String(s??'').replace(/[’‘]/g,"'").replace(/[“”]/g,'"').replace(/…/g,'...').replace(/[–—]/g,'-').replace(/→/g,'->').replace(/◦/g,'-').replace(/œ/g,'oe').replace(/Œ/g,'OE').replace(/·/g,'\xb7').replace(/\t/g,' ').replace(/[^\x0a\x20-\xff€•]/g,'');
+const dateLong=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'…';
+const heureFr=h=>h?h.replace(':','h'):'…';
+const qui=(c,n,p)=>[c&&c!=='Madame, Monsieur'?c:'',n,p].filter(x=>String(x||'').trim()).join(' ');
+function lettres(v){
+  const f=v.f,com=COM[f.dem]||COM.CAF,quand=`le ${dateLong(f.dateVis)} à ${heureFr(f.heureVis)}`,ou=`${f.adresse||'…'} à ${f.ville||'…'}`;
+  const pour=`Nous intervenons pour le compte de ${com.lettre}.`,cv=c=>c||'Madame, Monsieur';
+  const base=[!f.dateVis&&'date de visite',!f.heureVis&&'heure de visite',!f.adresse&&'adresse du logement',!f.ville&&'ville du logement'];
+  const objet='Information concernant une visite de vérification de la décence de votre logement';
+  return [
+   {k:'proprietaire',titre:'Courrier au propriétaire',file:'Courrier_Proprietaire',mail:f.pMail,civ:cv(f.pCiv),objet,
+    dest:[qui(f.pCiv,f.pNom,f.pPrenom),f.pAdr,[f.pCp,f.pVille].filter(Boolean).join(' ')],
+    manque:[...base,!f.pNom&&'nom du propriétaire',!f.pAdr&&'adresse du propriétaire'].filter(Boolean),
+    paras:[pour,`Nous vous informons que nous avons été missionnés pour réaliser un diagnostic de décence concernant le logement occupé par ${qui(f.civ,f.nom,f.prenom)||'…'} au ${ou}.`,
+     'Dans ce cadre, une visite du logement doit être réalisée. Vous êtes invité à y assister si vous le souhaitez ou à vous y faire représenter.',
+     `Cette visite est programmée ${quand}.`,
+     'L’objectif de cette intervention est de vérifier la conformité du logement aux critères réglementaires de décence (sécurité, salubrité, équipements essentiels).',
+     `Nous restons à votre disposition pour toute information complémentaire et vous prions d’agréer, ${cv(f.pCiv)}, l’expression de nos salutations distinguées.`]},
+   {k:'locataire',titre:'Courrier au locataire',file:'Courrier_Locataire',mail:f.mail,civ:cv(f.civ),objet,
+    dest:[qui(f.civ,f.nom,f.prenom),f.adresse,[f.cp,f.ville].filter(Boolean).join(' ')],
+    manque:[...base,!f.nom&&'nom du locataire'].filter(Boolean),
+    paras:[pour,'Dans ce cadre, nous devons réaliser une visite de votre logement afin de vérifier qu’il répond bien aux critères de décence fixés par la réglementation (sécurité, salubrité, équipements essentiels). Cette démarche vise à s’assurer que le logement offre des conditions normales d’habitation et ne constitue pas une remise en cause de votre occupation du logement.',
+     'Nous vous précisons que nous avons aussi informé le propriétaire et un représentant de la mairie de cette visite.',
+     `Nous effectuerons cette visite ${quand}.`,
+     'Votre présence est nécessaire afin de nous permettre l’accès au logement et d’échanger, si besoin, sur les points observés lors de la visite.',
+     'Nous vous remercions par avance de votre accueil et restons à votre disposition pour toute question complémentaire.',
+     `Nous vous prions d’agréer, ${cv(f.civ)}, l’expression de nos salutations distinguées.`]},
+   {k:'mairie',titre:'Courrier à la mairie',file:'Courrier_Mairie',mail:f.mrMail,civ:cv(f.mrCiv),objet:'Information concernant une visite de vérification de la décence d’un logement',
+    dest:[f.mrVille?'Mairie de '+f.mrVille:'',f.mrAdr,[f.mrCp,f.mrVille].filter(Boolean).join(' ')],
+    manque:[...base,!f.mrAdr&&'adresse de la mairie'].filter(Boolean),
+    paras:[pour,`Nous devons réaliser un constat de décence d’un logement situé au ${ou}. Vous êtes invité à vous y rendre si vous le souhaitez.`,
+     `Nous effectuerons cette visite ${quand}.`,
+     'L’objectif de cette intervention est de vérifier la conformité du logement aux critères réglementaires de décence.',
+     `Nous vous prions d’agréer, ${cv(f.mrCiv)}, l’expression de nos salutations distinguées.`]}];
+}
+async function letterPdf(v,l){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),T=PDFT,M=20,CW=170,XD=115;
+  const INK=[33,43,54],MUT=[96,110,122],ACC=[27,109,150];
+  const font=(sz,st='normal',c=INK)=>{doc.setFont('helvetica',st);doc.setFontSize(sz);doc.setTextColor(...c)};
+  doc.setLineHeightFactor(1.35);
+  const lg=await loadImg(LOGO),lw=46,lh=lw*lg.naturalHeight/lg.naturalWidth;doc.addImage(LOGO,'PNG',M,14,lw,lh);
+  font(7.5,'normal',MUT);doc.text(T(SOLIHA_ADR),M,14+lh+5);
+  let y=52;font(10.5);
+  l.dest.filter(x=>String(x||'').trim()).forEach((s,i)=>{font(10.5,i?'normal':'bold');doc.text(T(s),XD,y);y+=5});
+  y=Math.max(y,72)+6;font(10);doc.text(T('Le '+dateLong(today())),XD,y);
+  y+=14;font(10,'bold');const ob=doc.splitTextToSize(T('Objet : '+l.objet),CW);doc.text(ob,M,y);y+=ob.length*5;
+  font(9.5,'normal',MUT);doc.text(T(`Suivi par : ${[P.nom,P.tel,P.mail].filter(Boolean).join(' - ')}`),M,y+1);
+  y+=14;font(10.5);doc.text(T(l.civ+','),M,y);y+=9;
+  for(const p of l.paras){const ls=doc.splitTextToSize(T(p),CW);doc.text(T(p),M,y,{maxWidth:CW,align:'justify'});y+=ls.length*10.5*.3528*1.35+3.5}
+  y+=6;font(10.5,'bold');doc.text('Le Service Technique',XD,y);
+  font(10);if(P.nom)doc.text(T(P.nom),XD,y+5.5);
+  if(P.sig){const w=40,h=Math.min(w*P.sig.r,22);doc.addImage(P.sig.src,P.sig.src.startsWith('data:image/png')?'PNG':'JPEG',XD,y+8,h/P.sig.r,h)}
+  doc.setDrawColor(...ACC);doc.setLineWidth(.4);doc.line(M,284,190,284);font(7.5,'normal',MUT);doc.text(T(SOLIHA_ADR),105,288.5,{align:'center'});
+  return doc.output('blob');
+}
+const dossierCourriers=v=>fname(`Courriers décence ${v.f.nom||'logement'} ${v.f.refDos||''}`);
+async function telechargerLettre(v,k){const l=lettres(v).find(x=>x.k===k);await offer(l.file+'.pdf',await letterPdf(v,l))}
+async function zipLettres(v){const files=[];for(const l of lettres(v))files.push({name:`${dossierCourriers(v)}/${l.file}.pdf`,data:new Uint8Array(await (await letterPdf(v,l)).arrayBuffer())});
+  offer(dossierCourriers(v)+'.zip',zip(files))}
+// Téléphone : menu de partage avec le PDF joint. PC : le PDF est enregistré puis un mail pré-rempli s'ouvre.
+async function envoyerLettre(v,k){
+  const l=lettres(v).find(x=>x.k===k),blob=await letterPdf(v,l),name=l.file+'.pdf';
+  const sujet=`Visite de contrôle décence ${[v.f.adresse,v.f.ville].filter(Boolean).join(' ')}`;
+  const corps=`Bonjour,\n\nVeuillez trouver ci-joint le courrier d’information concernant la visite de contrôle de décence citée en objet.\n\nCordialement,\n${P.nom||''}`;
+  const file=new File([blob],name,{type:'application/pdf'});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare?.({files:[file]})){
+    if(l.mail)try{await navigator.clipboard.writeText(l.mail);toast('Adresse copiée : collez-la comme destinataire')}catch(e){}
+    try{await navigator.share({files:[file],title:sujet,text:corps})}catch(e){if(e.name!=='AbortError')toast('Partage impossible : '+e.message)}
+    return}
+  await offer(name,blob);
+  location.href=`mailto:${l.mail||''}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+  toast(`Joignez au mail le fichier ${name} qui vient d’être enregistré`);
 }
 
 /* ---------- PDF : tableaux au format de la fiche ---------- */
@@ -1191,13 +1328,13 @@ async function exportPdf(v){
   /* --- informations administratives --- */
   const LW=[38,148];
   row([LB('Demandeur'),[cbs(Object.keys(COM).map(k=>[f.dem===k,COM[k].label]))]],LW);
-  row([LB('Référence dossier'),[rt([['N° allocataire : '],[f.alloc,1],...(isCAF(v)?[]:[['          Référence dossier : '],[f.refDos,1]])])]],LW);
+  row([LB('Référence dossier'),[rt([['N° allocataire : '],[f.alloc,1],['          Référence dossier : '],[f.refDos,1]])]],LW);
   row([LB(['Occupant-Adresse',gap(2),tx("Date d'entrée dans les lieux :",{sz:7.5,c:MUT}),tx(frDate(f.dateEntree),{b:1})],{va:'top'}),
        [rt([['Nom : '],[f.nom,1],['     Prénom : '],[f.prenom,1],['     Loyer : '],[f.loyer?f.loyer+' €':'',1],['     Aide : '],[f.aide?f.aide+' €':'',1]]),
         rt([['Adresse : '],[f.adresse,1],['     Code postal : '],[f.cp,1],['     Ville : '],[f.ville,1]]),
         rt([['Tél fixe : '],[f.telFixe,1],['     Tél portable : '],[f.telPort,1],['     Mail : '],[f.mail,1]])]],LW);
   const bt=f.bailType||[];
-  row([LB([cb(bt.includes('Propriétaire(s)'),'Propriétaire(s)',{b:1,c:ACC}),gap(1),cb(bt.includes('Gestionnaire(s)'),'Gestionnaire(s)',{b:1,c:ACC})]),[rt([['Nom, prénom, adresse, n° de téléphone : '],[f.bailCoord,1]])]],LW);
+  row([LB([cb(bt.includes('Propriétaire(s)'),'Propriétaire(s)',{b:1,c:ACC}),gap(1),cb(bt.includes('Gestionnaire(s)'),'Gestionnaire(s)',{b:1,c:ACC})]),[rt([['Nom, prénom : '],[qui(f.pCiv,f.pNom,f.pPrenom),1],['     Adresse : '],[[f.pAdr,[f.pCp,f.pVille].filter(Boolean).join(' ')].filter(Boolean).join(', '),1]]),rt([['Tél : '],[f.pTel,1],['     Mail : '],[f.pMail,1]]),...(f.bailCoord?[tx(f.bailCoord,{b:1})]:[])]],LW);
   row([LB('Type de visite'),[cb(f.typeVis==='Visite initiale','VISITE INITIALE'),gap(1),cb(f.typeVis==='Visite de contrôle','VISITE DE CONTRÔLE')]],LW);
   y+=4;
   row([HD('RÉSUMÉ DES DÉSORDRES RELEVÉS',{sz:8.5}),
@@ -1307,6 +1444,7 @@ async function exportPdf(v){
   if(!await store.open()){const b=$('#banner');b.hidden=false;b.textContent="Stockage indisponible sur ce navigateur : les visites seront perdues à la fermeture. Exportez une sauvegarde ou le PDF avant de quitter."}
   try{visits=(await store.all()).map(migrate)}catch(e){visits=[]}
   try{P=await store.getProfil()}catch(e){}
+  try{MAIRIES=await store.getRec('mairies');MAIRIES.l=MAIRIES.l||{}}catch(e){}
   render();
   try{await navigator.storage?.persist?.()}catch(e){}
   // Mode hors ligne : le service worker garde l'application en cache (impossible si le fichier est ouvert en local).
