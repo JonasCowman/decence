@@ -153,14 +153,12 @@ const ADMIN=[
  ['dateDem','Date de la demande','d'],
  ['dateVis','Date de la visite','d'],
  ['typeVis','Type de visite','r',['Visite initiale','Visite de contrôle']],
- ['matricule','Matricule CAF','t',0,0,isCAF],
- ['alloc','N° allocataire','t',0,0,isCAF],
+ ['alloc','N° allocataire','t'],
  ['refDos','Référence dossier','t',0,0,v=>!isCAF(v)],
  ['h','Occupant'],
  ['nom','Nom','t'],['prenom','Prénom','t'],
  ['loyer','Loyer (€)','n'],['aide','Aide (€)','n'],
- ['adresse','Adresse','t'],['cpville','Code postal / Ville','t'],
- ['bat','Bât. / Rés.','t'],['entree','Entrée','t'],['etage','Étage','t'],['couree','N° de la maison dans la courée','t'],
+ ['adresse','Adresse (avec bât., entrée, étage, n° dans la courée)','t'],['cp','Code postal','t'],['ville','Ville','t'],
  ['telFixe','Tél. fixe','tel'],['telPort','Tél. portable','tel'],['mail','E-mail','email'],
  ['dateEntree',"Date d'entrée dans les lieux",'d'],
  ['h','Propriétaire / gestionnaire'],
@@ -495,8 +493,8 @@ console.assert(normeCAF(1)===9&&normeCAF(2)===16&&normeCAF(3)===25&&normeCAF(7)=
 
 /* ---------- permis de louer (autorisation préalable à la mise en location) ---------- */
 const COMMUNES={
- 'Thouars':{logo:L_THO,foot:'Permis de louer de THOUARS',arr:'du président de la CCT'},
- 'Saint-Maixent-l’École':{logo:L_SME,foot:'Permis de louer de SAINT-MAIXENT-L’ÉCOLE',arr:'du maire de Saint-Maixent-l’École'}
+ 'Thouars':{cp:'79100',ville:'Thouars',logo:L_THO,foot:'Permis de louer de THOUARS',arr:'du président de la CCT'},
+ 'Saint-Maixent-l’École':{cp:'79400',ville:'Saint-Maixent-l’École',logo:L_SME,foot:'Permis de louer de SAINT-MAIXENT-L’ÉCOLE',arr:'du maire de Saint-Maixent-l’École'}
 };
 const isPdl=v=>v.type==='pdl';
 const ADMIN_PDL=[
@@ -509,13 +507,13 @@ const ADMIN_PDL=[
  ['dateVis','Date de la visite','d'],
  ['dateRap','Date du rapport de visite','d'],
  ['h','Propriétaire'],
- ['pSoc','Société','t'],['pNom','Nom / prénom','t'],['pAdr','Adresse','t'],
+ ['pSoc','Société','t'],['pNom','Nom','t'],['pPrenom','Prénom','t'],['pAdr','Adresse','t'],
  ['pTelF','Tél. fixe','tel'],['pTelP','Tél. portable','tel'],['pMail','E-mail','email'],
  ['h','Mandataire'],
- ['mAg','Nom de l’agence','t'],['mNom','Nom / prénom du référent','t'],['mAdr','Adresse','t'],
+ ['mAg','Nom de l’agence','t'],['mNom','Nom du référent','t'],['mPrenom','Prénom du référent','t'],['mAdr','Adresse','t'],
  ['mTelF','Tél. fixe','tel'],['mTelP','Tél. portable','tel'],['mMail','E-mail','email'],
  ['h','Logement'],
- ['adresse','Adresse','t'],['cpville','Code postal / Ville','t'],
+ ['adresse','Adresse','t'],['cp','Code postal','t'],['ville','Ville','t'],
  ['occ','Logement','r',['Occupé','Vacant']],
  ['h','Contre-visite',0,0,0,v=>v.f.typeVis==='Contre-visite'],
  ['cvDateDem','Date de la demande de contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite'],['cvDateVis','Date de la contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite'],['cvDateRap','Date du rapport de contre-visite','d',0,0,v=>v.f.typeVis==='Contre-visite']
@@ -724,6 +722,10 @@ const store={db:null,mem:new Map(),
 function migrate(v){
   v.f=v.f||{};v.it=v.it||{};v.done=v.done||{};
   if(isPdl(v)){if(!COMMUNES[v.f.commune])v.f.commune='Thouars';if(!v.f.typeVis)v.f.typeVis=v.f.cvDateVis?'Contre-visite':'Visite de contrôle'}else if(!COM[v.f.dem])v.f.dem='CAF';
+  // Code postal et ville séparés ; bât., entrée, étage et courée regroupés dans l'adresse.
+  const f=v.f;if(f.cpville!==undefined){if(!f.cp&&!f.ville){const m=/^\s*(\d{5})\s*(.*)$/.exec(f.cpville);if(m){f.cp=m[1];f.ville=m[2].trim()}else f.ville=f.cpville.trim()}delete f.cpville}
+  const extra=[['bat','Bât. / Rés. '],['entree','entrée '],['etage','étage '],['couree','maison n° ']].filter(([k])=>String(f[k]||'').trim()).map(([k,l])=>l+String(f[k]).trim());
+  if(extra.length)f.adresse=[f.adresse,...extra].filter(x=>String(x||'').trim()).join(', ');for(const k of ['bat','entree','etage','couree'])delete f[k];
   for(const s of Object.values(v.it)){s.o=s.o||[];s.t=s.t||[];s.df=s.df||[];s.ph=(s.ph||[]).map(p=>({cap:'',...p}));s.note=s.note||'';s.loc=s.loc||''}
   // Le type de chauffage / d'eau chaude était saisi dans la pathologie : il passe dans les champs de la rubrique 4.
   // Visite antérieure à la liste de commentaires pré-rédigés : indices de l'ancienne liste de défauts types.
@@ -742,7 +744,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const today=()=>new Date().toISOString().slice(0,10);
 const frDate=d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d.split('-').reverse().join('/'):(d||'');
 const newVisit=t=>({dfTxt:1,dfV:2,id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),created:Date.now(),updated:Date.now(),
-  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',typeVis:'Visite de contrôle',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today()}}),it:{},done:{},sig:''});
+  ...(t==='pdl'?{type:'pdl',f:{commune:'Thouars',cp:COMMUNES.Thouars.cp,ville:COMMUNES.Thouars.ville,typeVis:'Visite de contrôle',dateVis:today()}}:{f:{dem:'CAF',typeVis:'Visite initiale',dateVis:today()}}),it:{},done:{},sig:''});
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2600)}
 function save(now){if(!cur)return;cur.updated=Date.now();clearTimeout(saveT);const go=()=>store.put(cur).catch(e=>toast('Enregistrement impossible : '+e.message));if(now)return go();saveT=setTimeout(go,350)}
 const itemOf=id=>RR(cur).flatMap(r=>r.items||[]).find(d=>d.id===id);
@@ -818,8 +820,9 @@ function phBlock(id,s,nums,need){return `<div class="grp"><span>Photos${need?' <
       <div class="cams"><label class="btn cam">${svg('cam')}Prendre une photo<input type="file" accept="image/*" capture="environment" data-photo="${id}"></label>
       <label class="btn cam">${svg('plus')}Depuis la galerie<input type="file" accept="image/*" multiple data-photo="${id}"></label></div></div></div>`}
 function topbar(title,sub,back,logo){return `<div class="top">${back?`<button class="btn-icon" data-act="${back}" aria-label="Retour">${svg('back')}</button>`:''}<div class="grow"><h1>${esc(title)}</h1>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div>${logo?`<img class="com" src="${logo}" alt="${esc(isPdl(cur)?cur.f.commune:cur.f.dem)}">`:''}</div>`}
-const who=v=>isPdl(v)?[v.f.adresse,v.f.cpville].filter(Boolean).join(', ')||'Logement non renseigné':[v.f.nom,v.f.prenom].filter(Boolean).join(' ')||'Occupant non renseigné';
-const where=v=>isPdl(v)?(v.f.pNom||v.f.pSoc?'Propriétaire : '+(v.f.pSoc||v.f.pNom):''):[v.f.adresse,v.f.cpville].filter(Boolean).join(', ');
+const cpv=v=>[v.f.cp,v.f.ville].filter(Boolean).join(' ');
+const who=v=>isPdl(v)?[v.f.adresse,cpv(v)].filter(Boolean).join(', ')||'Logement non renseigné':[v.f.nom,v.f.prenom].filter(Boolean).join(' ')||'Occupant non renseigné';
+const where=v=>isPdl(v)?(v.f.pNom||v.f.pSoc?'Propriétaire : '+(v.f.pSoc||[v.f.pNom,v.f.pPrenom].filter(Boolean).join(' ')):''):[v.f.adresse,cpv(v)].filter(Boolean).join(', ');
 const logoOf=v=>isPdl(v)?COMMUNES[v.f.commune]?.logo:COM[v.f.dem]?.logo;
 const kind=v=>isPdl(v)?'Permis de louer · '+v.f.commune+' · '+(v.f.typeVis||''):(COM[v.f.dem]?.label||'')+' · '+(v.f.typeVis||'');
 
@@ -952,7 +955,9 @@ document.addEventListener('change',async e=>{
   if(el.dataset.import!==undefined)return importJson(el);
   if(el.dataset.psig!==undefined){const f=el.files[0];el.value='';if(!f)return;try{const p=await shrink(f);P.sig={src:p.src,r:p.h/p.w};await saveP();render()}catch(err){toast('Image non importée : '+err.message)}return}
   if(!cur)return;
-  if(el.dataset.ft==='r'){cur.f[el.dataset.f]=el.value;save();keep();return}
+  if(el.dataset.ft==='r'){cur.f[el.dataset.f]=el.value;
+    if(el.dataset.f==='commune'&&(!cur.f.cp||Object.values(COMMUNES).some(c=>c.cp===cur.f.cp))){cur.f.cp=COMMUNES[el.value].cp;cur.f.ville=COMMUNES[el.value].ville}
+    save();keep();return}
   if(el.dataset.ft==='c'){const a=cur.f[el.dataset.f]=(cur.f[el.dataset.f]||[]).filter(x=>x!==el.value);if(el.checked)a.push(el.value);save();return}
   if(el.dataset.it&&el.dataset.k){
     const s=it(el.dataset.it),k=el.dataset.k;
@@ -1050,7 +1055,7 @@ async function exportPdf(v){
   toast('Génération du PDF…');
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
   const W=210,H=297,M=12,CW=W-2*M,TOP=12,BOT=H-14,PAD=1.5;
-  const INK=[33,43,54],MUT=[96,110,122],ACC=[27,109,150],TINT=[233,242,247],LINE=[196,208,217],WHITE=[255,255,255],RED=[180,35,24],OK=[43,122,75];let y=TOP;
+  const ROSE=[251,233,231],INK=[33,43,54],MUT=[96,110,122],ACC=[27,109,150],TINT=[233,242,247],LINE=[196,208,217],WHITE=[255,255,255],RED=[180,35,24],OK=[43,122,75];let y=TOP;
   // Icônes des rubriques converties en PNG (le PDF n'accepte pas le WebP).
   const ICP={};for(const [k,src] of Object.entries(ICO)){try{const im=await loadImg(src),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);ICP[k]=c.toDataURL('image/png')}catch(e){}}
   // Polices PDF standard : jeu de caractères Windows-1252 uniquement.
@@ -1146,9 +1151,9 @@ async function exportPdf(v){
   const LW=[38,148];
   row([LB('Référence dossier'),[rt([['N° '],[f.refDos,1]])]],LW);
   row([LB('PROPRIÉTAIRE'),LB('MANDATAIRE')],[93,93]);
-  row([[rt([['Société : '],[f.pSoc,1]]),rt([['Nom / Prénom : '],[f.pNom,1]]),rt([['Adresse : '],[f.pAdr,1]]),rt([['Tél fixe : '],[f.pTelF,1]]),rt([['Tél portable : '],[f.pTelP,1]]),rt([['Mail : '],[f.pMail,1]])],
-       [rt([['Nom de l’agence : '],[f.mAg,1]]),rt([['Nom / Prénom du référent : '],[f.mNom,1]]),rt([['Adresse : '],[f.mAdr,1]]),rt([['Tél fixe : '],[f.mTelF,1]]),rt([['Tél portable : '],[f.mTelP,1]]),rt([['Mail : '],[f.mMail,1]])]],[93,93]);
-  row([LB('Logement'),[rt([['Adresse : '],[[f.adresse,f.cpville].filter(Boolean).join(', '),1]]),cbs([[f.occ==='Occupé','Occupé'],[f.occ==='Vacant','Vacant']],{pre:'Occupé ou vacant :'})]],LW);
+  row([[rt([['Société : '],[f.pSoc,1]]),rt([['Nom : '],[f.pNom,1],['     Prénom : '],[f.pPrenom,1]]),rt([['Adresse : '],[f.pAdr,1]]),rt([['Tél fixe : '],[f.pTelF,1]]),rt([['Tél portable : '],[f.pTelP,1]]),rt([['Mail : '],[f.pMail,1]])],
+       [rt([['Nom de l’agence : '],[f.mAg,1]]),rt([['Nom du référent : '],[f.mNom,1],['     Prénom : '],[f.mPrenom,1]]),rt([['Adresse : '],[f.mAdr,1]]),rt([['Tél fixe : '],[f.mTelF,1]]),rt([['Tél portable : '],[f.mTelP,1]]),rt([['Mail : '],[f.mMail,1]])]],[93,93]);
+  row([LB('Logement'),[rt([['Adresse : '],[[f.adresse,cpv(v)].filter(Boolean).join(', '),1]]),cbs([[f.occ==='Occupé','Occupé'],[f.occ==='Vacant','Vacant']],{pre:'Occupé ou vacant :'})]],LW);
   row([LB('Type de visite'),[cbs([[!cv,'VISITE DE CONTRÔLE']]),rt([['réalisée le : '],[frDate(f.dateVis),1]],{ind:4}),...(cv?[gap(1),cbs([[true,'CONTRE-VISITE']]),rt([['réalisée le : '],[frDate(f.cvDateVis),1]],{ind:4})]:[])]],LW);
   y+=4;
   row([HD('RÉSUMÉ DES ANOMALIES RELEVÉES',{sz:8.5}),
@@ -1186,11 +1191,10 @@ async function exportPdf(v){
   /* --- informations administratives --- */
   const LW=[38,148];
   row([LB('Demandeur'),[cbs(Object.keys(COM).map(k=>[f.dem===k,COM[k].label]))]],LW);
-  row([LB('Référence dossier'),[isCAF(v)?rt([['Matricule CAF : '],[f.matricule,1],['          N° allocataire : '],[f.alloc,1]]):rt([[f.refDos,1]])]],LW);
+  row([LB('Référence dossier'),[rt([['N° allocataire : '],[f.alloc,1],...(isCAF(v)?[]:[['          Référence dossier : '],[f.refDos,1]])])]],LW);
   row([LB(['Occupant-Adresse',gap(2),tx("Date d'entrée dans les lieux :",{sz:7.5,c:MUT}),tx(frDate(f.dateEntree),{b:1})],{va:'top'}),
        [rt([['Nom : '],[f.nom,1],['     Prénom : '],[f.prenom,1],['     Loyer : '],[f.loyer?f.loyer+' €':'',1],['     Aide : '],[f.aide?f.aide+' €':'',1]]),
-        rt([['Adresse : '],[f.adresse,1],['     Ville/CP : '],[f.cpville,1]]),
-        rt([['Bât/rés : '],[f.bat,1],['     Entrée : '],[f.entree,1],['     Étage : '],[f.etage,1],['     N° de la maison dans la courée : '],[f.couree,1]]),
+        rt([['Adresse : '],[f.adresse,1],['     Code postal : '],[f.cp,1],['     Ville : '],[f.ville,1]]),
         rt([['Tél fixe : '],[f.telFixe,1],['     Tél portable : '],[f.telPort,1],['     Mail : '],[f.mail,1]])]],LW);
   const bt=f.bailType||[];
   row([LB([cb(bt.includes('Propriétaire(s)'),'Propriétaire(s)',{b:1,c:ACC}),gap(1),cb(bt.includes('Gestionnaire(s)'),'Gestionnaire(s)',{b:1,c:ACC})]),[rt([['Nom, prénom, adresse, n° de téléphone : '],[f.bailCoord,1]])]],LW);
@@ -1241,15 +1245,15 @@ async function exportPdf(v){
     if(pdl)row([LB('Pas de désordres constatés'),[cb(!!v.done[r.id]&&!r.items.some(d=>v.it[d.id]?.on),'',{cc:OK})]],[170,16]);
     for(const d of r.items){
       const s=v.it[d.id]||{on:false,o:[],t:[],df:[],note:'',d:false,ph:[]};
-      const c1=[cb(s.on,d.t,{b:1,c:s.on?INK:MUT})],c3=[];
+      const c1=[cb(s.on,d.t,{b:1,c:s.on?INK:MUT,cc:RED})],c3=[];
       if(d.ty&&d.tl!==MEL){c1.push(gap(1),tx(d.tl+' :',{i:1,sz:8}));d.ty.forEach((x,i)=>c1.push(cb(d.tf?(f[d.tf]||[]).includes(x):s.t.includes(i),x,{ind:2})))}
-      if(d.o){if(d.ol)c3.push(tx(d.ol+' :',{i:1}));d.o.forEach((x,i)=>c3.push(cb(s.o.includes(i),x)))}
+      if(d.o){if(d.ol)c3.push(tx(d.ol+' :',{i:1}));d.o.forEach((x,i)=>c3.push(cb(s.o.includes(i),x,{cc:RED})))}
       if(d.ty&&d.tl===MEL){c3.push(gap(1),tx(d.tl+' :',{i:1}));d.ty.forEach((x,i)=>c3.push(cb(s.t.includes(i),x)))}
       if(d.norm&&s.on){const m=normeCAF(f.lNbOcc);if(m)c3.push(tx(`Norme CAF pour ${f.lNbOcc} occupant(s) : ${m} m² minimum. Superficie : ${f.lSurf||'non renseignée'} m².`))}
       if(c3.length)c3.push(gap(1));
       c3.push(rt([['(3) '],[s.on?[s.loc,s.note].filter(Boolean).join(' - '):'',1]],{c:RED}));
       if(s.on)s.ph.forEach((p,i)=>{c3.push(gap(1),img(p.src,p.w,p.h,{maxH:62}),rt([[`Photo ${nums[d.id+':'+i]}${p.cap?' : ':''}`],[p.cap,1]],{sz:8,c:MUT}))});
-      row([s.on?{items:c1,fill:TINT}:c1,[tx(d.ref||'',{sz:7.5,c:MUT}),...(d.rsd?[gap(1),tx(d.rsd,{sz:7.5,c:MUT})]:[])],c3,d.d?{items:[cb(s.on&&s.d,'',{cc:RED})],va:'middle'}:[]],IW,{keep:70});
+      row([s.on?{items:c1,fill:ROSE}:c1,[tx(d.ref||'',{sz:7.5,c:MUT}),...(d.rsd?[gap(1),tx(d.rsd,{sz:7.5,c:MUT})]:[])],c3,d.d?{items:[cb(s.on&&s.d,'',{cc:RED})],va:'middle'}:[]],IW,{keep:70});
     }
     if(r.id==='r4')row([[tx('Installation de détecteur de fumée :',{b:1}),cbs(yn(f.detect))],[tx('CCH art. R.142-2',{sz:7.5,c:MUT})],[rt([['Nombre de détecteur de fumée : '],[f.detectNb,1]])],[]],IW);
     notes(r.id==='r3'?[2,3]:r.id==='r6'?(pdl?[3,4,5,6]:[3,4,5,6,7]):[3]);
@@ -1270,7 +1274,7 @@ async function exportPdf(v){
         rt([['Si non, quels sont les travaux non effectués qui doivent être réalisés ? '],[f.cvLeve==='Oui'?'':f.cvReste,1]]),...ph8]],[CW]);
   }
   y+=4;need(56);
-  row([LB('Bailleur ou mandataire (nom de l’agence et nom - prénom du référent)'),[tx([f.mAg,f.mNom].filter(Boolean).join(' - ')||[f.pSoc,f.pNom].filter(Boolean).join(' - '),{b:1})]],[70,116]);
+  row([LB('Bailleur ou mandataire (nom de l’agence et nom - prénom du référent)'),[tx([f.mAg,[f.mNom,f.mPrenom].filter(Boolean).join(' ')].filter(Boolean).join(' - ')||[f.pSoc,[f.pNom,f.pPrenom].filter(Boolean).join(' ')].filter(Boolean).join(' - '),{b:1})]],[70,116]);
   y+=3;
   // Une ligne de signatures par visite : enquêteur et propriétaire (ou son représentant).
   const sig=(sg,nom,d)=>[...(sg?[img(sg.src,100,100*sg.r,{maxW:50,maxH:24})]:[gap(24)]),tx(`${nom||''}${d?' - le '+frDate(d):''}`,{al:'center',sz:8,c:MUT})];
