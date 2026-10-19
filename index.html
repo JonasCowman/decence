@@ -265,7 +265,7 @@ const R=[
  ]},
  {id:'r4',n:'4',t:'Équipements du logement',ic:'equip',pt:'RELEVÉ DES DÉSORDRES LIÉS AUX ÉQUIPEMENTS DU LOGEMENT',items:[
   {id:'elec',t:'Installation électrique',ref:'Décence-3.6, 2.5',p:1,d:1,s:'equip',th:'sec',grp:1,
-   w:'Mise en sécurité de l’installation électrique par un professionnel qualifié, avec fourniture d’une attestation de conformité ou d’un diagnostic électrique après travaux',
+   w:'Mise en sécurité de l’installation électrique par un professionnel qualifié (attestation de l’électricien en cas de mise en sécurité globale de l’installation)',
    o:['Insuffisante : absence de prise dans certaines pièces, surcharge des prises',"En mauvais état d'usage et de fonctionnement",'Non sécurisée : fils volants, échauffements, branchements non adaptés…'],
    ow:['Création de prises de courant en nombre suffisant et suppression des surcharges','Remise en état d’usage et de fonctionnement de l’installation',null],
    df:[['Absence ou inaccessibilité du dispositif de coupure générale dans le logement','Mise en place, dans le logement, d’un dispositif de coupure générale accessible'],['Absence de disjoncteur différentiel 30 mA','Installation d’une protection différentielle 30 mA'],['Matériel vétuste et/ou inadapté (douille métal ou de chantier, fusibles à tabatière, tresses textiles…)','Remplacement du matériel électrique vétuste ou inadapté'],['Risque de contact direct (câbles volants, prise de courant cassée…)','Suppression des risques de contact direct : protection des conducteurs, remplacement des appareillages cassés'],['Absence de mise à la terre','Mise à la terre de l’installation'],['Zones de protection non respectées dans la salle de bains','Mise en conformité des équipements situés dans les volumes de la salle de bains'],['Traces d’échauffement','Recherche et suppression des causes d’échauffement']]},
@@ -383,10 +383,10 @@ const PRE={"stab":[
   ["Parties communes encombrées, sales ou insalubres ; local poubelles mal entretenu.","Nettoyage et remise en état des parties communes","Nettoyer et désencombrer les parties communes, remettre en état le local poubelles (sol lavable, ventilation, éclairage, point d’eau si possible) et organiser leur entretien régulier (règlement sanitaire départemental)","Hygiène et nuisibles"],
   ["Revêtements des parties communes très dégradés (murs, sols, plafonds).","Remise en état des revêtements des parties communes","Reprendre les supports dégradés et refaire les revêtements de murs, sols et plafonds des parties communes","Clos et couvert"]],
  "elec":[
-  ["Tableau électrique vétuste, avec fils ou bornes directement accessibles.","Mise en sécurité du tableau électrique par un professionnel qualifié","Remplacer le tableau par un tableau de répartition équipé de protections adaptées (disjoncteurs divisionnaires, protection différentielle 30 mA), avec capot fermé empêchant tout contact direct, conformément à la NF C 15-100","Sécurité des occupants"],
+  ["Tableau électrique vétuste, avec fils ou bornes directement accessibles.","Mise en sécurité du tableau électrique par un professionnel qualifié (justificatif : attestation de l’électricien)","Remplacer le tableau par un tableau de répartition équipé de protections adaptées (disjoncteurs divisionnaires, protection différentielle 30 mA), avec capot fermé empêchant tout contact direct, conformément à la NF C 15-100 ; fournir une attestation de l’électricien décrivant les travaux de mise en sécurité réalisés (ou, le cas échéant, une attestation Consuel)","Sécurité des occupants"],
   ["Absence de protection différentielle 30 mA.","Installation d’une protection différentielle 30 mA","Installer en tête de l’installation des interrupteurs différentiels haute sensibilité 30 mA (type AC et type A selon les circuits), conformément à la NF C 15-100","Sécurité des occupants"],
   ["Dispositif de coupure générale absent ou inaccessible depuis le logement.","Mise en place, dans le logement, d’un dispositif de coupure générale accessible","Installer un dispositif de coupure générale accessible depuis l’intérieur du logement, sans moyen particulier d’accès, conformément à la NF C 15-100","Sécurité des occupants"],
-  ["Absence de prise de terre ou prises de courant sans broche de terre.","Mise à la terre de l’installation électrique","Réaliser ou vérifier la prise de terre et raccorder l’ensemble des circuits de prises et des masses métalliques au conducteur de protection, avec une valeur de résistance de terre compatible avec les protections différentielles (NF C 15-100)","Sécurité des occupants"],
+  ["Absence de prise de terre ou prises de courant sans broche de terre.","Mise à la terre de l’installation électrique","Réaliser ou vérifier la prise de terre et raccorder l’ensemble des circuits de prises et des masses métalliques au conducteur de protection, avec une valeur de résistance de terre compatible avec les protections différentielles (NF C 15-100) ; faire mentionner la valeur de résistance de terre mesurée sur la facture ou sur une attestation de l’électricien","Sécurité des occupants"],
   ["Prise de courant ou interrupteur cassé ou arraché, avec risque de contact direct.","Remplacement des appareillages électriques cassés","Remplacer les prises et interrupteurs détériorés par des appareillages conformes, fixés sur boîtes d’encastrement ou en saillie, et supprimer tout conducteur accessible (NF C 15-100)","Sécurité des occupants"],
   ["Fils électriques dénudés, dominos ou raccordements apparents.","Suppression des risques de contact direct : protection des conducteurs","Placer les connexions dans des boîtes de dérivation fermées, protéger les conducteurs sous conduit ou goulotte et supprimer les fils volants (NF C 15-100)","Sécurité des occupants"],
   ["Appareillage électrique de la salle d’eau non adapté (prise ou luminaire à proximité immédiate de la douche ou de la baignoire).","Mise en conformité de l’installation électrique de la salle d’eau","Mettre en conformité l’installation de la salle d’eau selon les volumes définis par la NF C 15-100 (partie 7-701) : appareillages adaptés à chaque volume, protection différentielle 30 mA, liaison équipotentielle supplémentaire","Sécurité des occupants"],
@@ -395,9 +395,9 @@ const PRE={"stab":[
   ["Absence d’éclairage électrique dans certaines pièces ou dans les accès.","Installation d’un éclairage électrique dans chaque pièce et dans les accès","Installer dans chaque pièce et dans les accès au moins un point d’éclairage commandé, sur circuit protégé (art. 3-6 du décret ; NF C 15-100)","Sécurité des occupants"]],
  "gaz":[
   ["Tuyau souple de raccordement de l’appareil de cuisson périmé ou détérioré.","Remplacement du tuyau de raccordement gaz","Remplacer le tuyau souple par un flexible à durée de vie illimitée (NF D 36-121 ou NF D 36-125), avec robinet de commande accessible","Sécurité des occupants"],
-  ["Canalisations de gaz corrodées, détériorées ou mal fixées.","Remise en état des canalisations de gaz par un professionnel qualifié","Faire reprendre les canalisations par un installateur qualifié conformément à l’arrêté du 2 août 1977 modifié et au NF DTU 61.1, puis fournir un certificat de conformité ou un diagnostic gaz","Sécurité des occupants"],
+  ["Canalisations de gaz corrodées, détériorées ou mal fixées.","Remise en état des canalisations de gaz par un professionnel qualifié (justificatif : certificat de conformité de l’installateur)","Faire reprendre les canalisations par un installateur qualifié conformément à l’arrêté du 2 août 1977 modifié et au NF DTU 61.1 ; fournir le certificat de conformité établi par l’installateur","Sécurité des occupants"],
   ["Robinet de coupure ou robinet de commande d’appareil absent ou inaccessible.","Mise en place de robinets de coupure accessibles","Installer un robinet de commande accessible en amont de chaque appareil et un organe de coupure générale accessible (arrêté du 2 août 1977 modifié)","Sécurité des occupants"],
-  ["Odeur de gaz constatée lors de la visite.","Recherche de fuite et mise en sécurité immédiate de l’installation gaz","Fermer l’alimentation et faire intervenir sans délai le distributeur ou un professionnel qualifié pour rechercher et réparer la fuite ; remise en service uniquement après contrôle d’étanchéité","Sécurité des occupants"],
+  ["Odeur de gaz constatée lors de la visite.","Recherche de fuite et mise en sécurité immédiate de l’installation gaz (justificatif : bon d’intervention attestant le contrôle d’étanchéité)","Fermer l’alimentation et faire intervenir sans délai le distributeur ou un professionnel qualifié pour rechercher et réparer la fuite ; remise en service uniquement après contrôle d’étanchéité ; fournir le bon d’intervention attestant la réparation et le contrôle d’étanchéité","Sécurité des occupants"],
   ["Bouteille de propane installée à l’intérieur du logement.","Déplacement de la bouteille de propane à l’extérieur","Installer les bouteilles de propane à l’extérieur du logement, conformément à l’arrêté du 2 août 1977 modifié, avec une canalisation et des raccords conformes","Sécurité des occupants"]],
  "eau":[
   ["Absence d’alimentation en eau potable à l’intérieur du logement.","Raccordement du logement à une alimentation en eau potable","Raccorder le logement au réseau public de distribution d’eau potable et alimenter chaque point d’eau (évier, lavabo, douche ou baignoire, WC) (art. 3-2 du décret)","Équipements sanitaires"],
@@ -483,8 +483,8 @@ const PRE={"stab":[
  "surocc":[
   ["Surface habitable inférieure aux normes de peuplement de la CAF au regard du nombre d’occupants.","","","","decence"]],
  "nuis":[
-  ["Présence de rongeurs : déjections et traces de passage.","Dératisation par une entreprise spécialisée et obturation des points d’accès","Faire intervenir une entreprise spécialisée (dératisation), obturer les passages (trous, gaines, bas de portes) et fournir le justificatif d’intervention (RSD art. 119)","Hygiène et nuisibles"],
-  ["Présence d’insectes (blattes, punaises de lit).","Désinsectisation par une entreprise spécialisée","Faire intervenir une entreprise spécialisée (désinsectisation, avec plusieurs passages si nécessaire pour les punaises de lit) et fournir le justificatif d’intervention (RSD art. 119)","Hygiène et nuisibles"],
+  ["Présence de rongeurs : déjections et traces de passage.","Dératisation par une entreprise spécialisée et obturation des points d’accès","Faire intervenir une entreprise spécialisée (dératisation), obturer les passages (trous, gaines, bas de portes) (RSD art. 119)","Hygiène et nuisibles"],
+  ["Présence d’insectes (blattes, punaises de lit).","Désinsectisation par une entreprise spécialisée","Faire intervenir une entreprise spécialisée (désinsectisation, avec plusieurs passages si nécessaire pour les punaises de lit) (RSD art. 119)","Hygiène et nuisibles"],
   ["Présence de pigeons, de fientes ou de cadavres d’oiseaux dans les combles ou le grenier.","Nettoyage, désinfection et obturation des accès des oiseaux","Évacuer les cadavres et les fientes avec des protections adaptées, désinfecter les surfaces et obturer les accès des oiseaux (grillages sur chatières et ouvertures, remplacement des vitrages cassés)","Hygiène et nuisibles"],
   ["Présence d’insectes xylophages (termites, capricornes) dans les bois de structure.","Traitement des bois et vérification de la structure","Faire traiter les bois par une entreprise spécialisée, faire vérifier la résistance des bois de structure et remplacer les pièces atteintes","Hygiène et nuisibles"]]};
 // Catégories de travaux du document -> thèmes de la liste de travaux.
@@ -612,7 +612,7 @@ const TECH={
  'Mise en sécurité de l’escalier / du palier : pose ou fixation du garde-corps et de la main courante':'Mettre en sécurité l’escalier et le palier : garde-corps solidement fixé d’une hauteur minimale de 1 m, sans élément facilitant l’escalade et avec des vides inférieurs à 11 cm (norme NF P01-012) ; main courante continue à une hauteur de 90 à 95 cm, d’un diamètre minimal de 40 mm, prolongée de 30 cm au-delà des premières et dernières marches lorsque la configuration le permet',
  'Mise en place de garde-corps réglementaires aux fenêtres des étages':'Mettre en place aux fenêtres des étages un garde-corps ou une barre d’appui solidement fixé, assurant une hauteur de protection minimale de 1 m depuis le sol (allège comprise), sans élément facilitant l’escalade et avec des vides inférieurs à 11 cm (norme NF P01-012)',
  'Mise en conformité du garde-corps (espacements réglementaires)':'Mettre en conformité le garde-corps : vides entre éléments inférieurs à 11 cm et absence d’élément horizontal facilitant l’escalade entre 0,45 m et 1 m (norme NF P01-012)',
- 'Mise en sécurité de l’installation électrique par un professionnel qualifié, avec fourniture d’une attestation de conformité ou d’un diagnostic électrique après travaux':'Faire mettre en sécurité l’installation électrique par un professionnel qualifié, en traitant a minima les six points de sécurité : appareil général de commande et de protection accessible, protection différentielle 30 mA adaptée à la prise de terre, protection de chaque circuit contre les surintensités adaptée à la section des conducteurs, liaison équipotentielle et respect des volumes dans les pièces d’eau, absence de matériel vétuste ou inadapté, absence de conducteur nu accessible (référence : norme NF C 15-100). Fournir une attestation de conformité (Consuel) ou un diagnostic électrique sans anomalie après travaux',
+ 'Mise en sécurité de l’installation électrique par un professionnel qualifié (attestation de l’électricien en cas de mise en sécurité globale de l’installation)':'Faire mettre en sécurité l’installation électrique par un professionnel qualifié, en traitant a minima les six points de sécurité : appareil général de commande et de protection accessible, protection différentielle 30 mA adaptée à la prise de terre, protection de chaque circuit contre les surintensités adaptée à la section des conducteurs, liaison équipotentielle et respect des volumes dans les pièces d’eau, absence de matériel vétuste ou inadapté, absence de conducteur nu accessible (référence : norme NF C 15-100). Fournir une attestation de l’électricien en cas de mise en sécurité globale de l’installation',
  'Création de prises de courant en nombre suffisant et suppression des surcharges':'Créer des prises de courant 16 A avec terre en nombre suffisant pour supprimer les multiprises et rallonges (à titre de référence, la norme NF C 15-100 prévoit au moins 5 prises dans le séjour, 3 par chambre et 6 dans la cuisine dont 4 au-dessus du plan de travail), chaque circuit étant protégé par un disjoncteur adapté à la section des conducteurs',
  'Mise en place, dans le logement, d’un dispositif de coupure générale accessible':'Installer dans le logement un appareil général de commande et de protection (disjoncteur de branchement) accessible, dont l’organe de manœuvre est situé entre 0,50 m et 1,80 m du sol',
  'Installation d’une protection différentielle 30 mA':'Installer des interrupteurs ou disjoncteurs différentiels 30 mA (haute sensibilité) protégeant l’ensemble des circuits du logement',
@@ -696,11 +696,18 @@ function travaux(v){
   if(v.f.detect==='Non')push('sec','• '+tk('Installation d’au moins un détecteur autonome avertisseur de fumée (DAAF) conforme à la norme NF EN 14604'));
   return Object.entries(L).filter(([,l])=>l.length).map(([k,l])=>({title:TH[k],lines:l}));
 }
+// Phrase fixe sur les justificatifs, placée par le rapport avant la liste de travaux (non modifiable).
+function justifTexte(v){
+  const pr='des documents probants : factures détaillées des entreprises (nature des travaux, matériel posé, localisation), attestations ou diagnostics lorsqu’ils sont requis, et photographies';
+  const soi='Pour les travaux réalisés par le propriétaire lui-même : factures d’achat du matériel et photographies.';
+  return isPdl(v)?`Leur bonne exécution devra être justifiée, lors de la contre-visite ou par transmission préalable au service instructeur, par ${pr} avant et après travaux. ${soi}`
+    :`La réalisation des travaux devra être justifiée auprès de ${COM[v.f.dem]?.lettre||'l’organisme à l’origine de la demande'} par ${pr} des travaux réalisés. ${soi}`;
+}
 function travauxTexte(v,blocks){
   const themes=blocks.map(b=>b.title.toLowerCase()).join(', ');
   const intro=v.f.cNd==='Oui'
     ?`Les désordres constatés ne permettent pas de considérer le logement comme décent. En l’état, le logement ne satisfait pas aux exigences du décret n° 2002-120 du 30 janvier 2002, notamment en matière de ${themes}.`
-    :'Les travaux suivants sont préconisés pour remédier aux désordres constatés :';
+    :'Les travaux suivants sont préconisés pour remédier aux désordres constatés.';
   return intro+'\n\n'+blocks.map((b,i)=>`${i+1}. ${b.title}\n${b.lines.join('\n')}`).join('\n\n');
 }
 // Ajoute au texte existant les lignes générées manquantes, sans toucher à ce que l'utilisateur a rédigé.
@@ -789,6 +796,8 @@ function migrate(v){
 
 /* ---------- état ---------- */
 let visits=[],cur=null,view='list',saveT=null,P={id:'moi'};
+// Sauvegarde : dossiers cochés pour l'export, et inclusion du carnet des mairies.
+const exSel=new Set();let exMairies=true;
 const saveP=()=>store.putProfil(P).catch(e=>toast('Enregistrement du profil impossible : '+e.message));
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -916,10 +925,18 @@ function render(){
     return;
   }
   if(view==='sauvegarde'){
+    const L=[...visits].sort((a,b)=>b.updated-a.updated),n=L.filter(v=>exSel.has(v.id)).length;
     app.innerHTML=`${topbar('Sauvegarde et import','Visites et carnet des mairies','list')}
-     <p class="muted">La sauvegarde (.json) contient toutes les visites et le carnet des mairies. Elle sert à transférer les dossiers vers un PC ou à les partager avec un collègue.</p>
-     <div class="links"><button data-act="export">${svg('pdf')}<span class="grow">Exporter une sauvegarde (.json)</span></button>
-      <label class="btn">${svg('plus')}<span class="grow">Importer une sauvegarde</span><input type="file" accept=".json,application/json" data-import hidden></label></div>`;
+     <p class="muted">Cochez les dossiers à exporter. La sauvegarde (.json) sert à transférer des dossiers vers un PC ou à les partager avec un collègue.</p>
+     <div class="row" style="margin-bottom:12px"><button data-act="sel" data-k="all">Tout cocher</button><button data-act="sel" data-k="encours">Dossiers en cours</button><button data-act="sel" data-k="none">Tout décocher</button></div>
+     <div class="items">${L.length?L.map(v=>`<label class="item ${exSel.has(v.id)?'on':''}" style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;cursor:pointer">
+       <input type="checkbox" data-sel="${v.id}" ${exSel.has(v.id)?'checked':''} style="width:24px;height:24px;margin:2px 0 0;accent-color:var(--accent);flex:none">
+       <span style="min-width:0"><span class="tag ${isPdl(v)?'pdl':''}">${esc(kind(v))}</span><span style="display:block;font-weight:700;margin-top:4px">${esc(who(v))}</span>
+       <span class="muted" style="display:block;font-size:.9rem">${esc(where(v)||'Adresse non renseignée')}${v.f.dateVis?' · visite le '+esc(frDate(v.f.dateVis)):''}${v.pdfAt?' · terminé':''}</span></span></label>`).join('')
+      :'<div class="empty">Aucun dossier sur cet appareil.</div>'}</div>
+     <label class="chip" style="margin-top:14px"><input type="checkbox" data-selmr ${exMairies?'checked':''}>Inclure le carnet des mairies (${Object.keys(MAIRIES.l).length})</label>
+     <div class="links"><label class="btn">${svg('plus')}<span class="grow">Importer une sauvegarde</span><input type="file" accept=".json,application/json" data-import hidden></label></div>`;
+    bar.hidden=false;bi.innerHTML=`<button class="btn-primary" data-act="export">${svg('pdf')}${n?`Exporter ${n} dossier${n>1?'s':''}`:'Exporter'}</button>`;
     return;
   }
   if(view==='choose'){
@@ -1014,7 +1031,8 @@ function render(){
    ${r.pre?`<div class="form">${r.pre.map(field).join('')}</div>`:''}
    ${r.items?`<p class="muted">Cochez chaque pathologie constatée. Les autres figureront non cochées dans le rapport.</p><div class="items">${r.items.map(d=>itemHtml(d,nums)).join('')}</div>`:''}
    ${r.gen?`<div class="row" style="margin-bottom:10px"><button class="btn-primary" data-act="gentrav">${svg('sync')}${filled(cur.f.trav)?'Mettre à jour depuis les désordres':'Pré-remplir depuis les désordres'}</button></div>
-     <p class="muted">La liste est générée par thème à partir des désordres cochés et des défauts types. Modifiez-la librement : la mise à jour ajoute seulement les correctifs manquants.</p>`:''}
+     <p class="muted">La liste est générée par thème à partir des désordres cochés et des défauts types. Modifiez-la librement : la mise à jour ajoute seulement les correctifs manquants.</p>
+     <div class="hint">Phrase ajoutée automatiquement au rapport, avant la liste : « ${esc(justifTexte(cur))} »</div>`:''}
    ${r.fields?`<div class="form" style="margin-top:14px">${r.fields.map(field).join('')}</div>`:''}
    ${r.phId?phBlock(r.phId,it(r.phId),nums,false):''}`;
   bar.hidden=false;
@@ -1058,6 +1076,8 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',async e=>{
   const el=e.target;
   if(el.dataset.import!==undefined)return importJson(el);
+  if(el.dataset.sel){el.checked?exSel.add(el.dataset.sel):exSel.delete(el.dataset.sel);return keep()}
+  if(el.dataset.selmr!==undefined){exMairies=el.checked;return}
   if(el.dataset.psig!==undefined){const f=el.files[0];el.value='';if(!f)return;try{const p=await shrink(f);P.sig={src:p.src,r:p.h/p.w};await saveP();render()}catch(err){toast('Image non importée : '+err.message)}return}
   if(!cur)return;
   // Ville du logement : la mairie destinataire suit, et ses coordonnées sont reprises du carnet.
@@ -1112,6 +1132,7 @@ document.addEventListener('click',async e=>{
   }
   if(a==='pdf'){await save(true);if(!P.nom){toast('Renseignez d’abord votre profil : il figure sur le rapport');view='profil';return go()}const v=cur;return exportPdf(v).then(()=>{if(window.jspdf){v.pdfAt=Date.now();store.put(v).catch(()=>{})}}).catch(err=>toast('PDF impossible : '+err.message))}
   if(a==='export')return exportJson();
+  if(a==='sel'){exSel.clear();for(const v of visits)if(b.dataset.k==='all'||b.dataset.k==='encours'&&!v.pdfAt)exSel.add(v.id);return keep()}
   if(a==='delmairie'){if(!armed(b,'Confirmer la suppression'))return;delete MAIRIES.l[b.dataset.k];saveMairies();return render()}
   if(['lettre','envoi','zipcour'].includes(a)){await save(true);if(!window.jspdf){toast("Le module PDF n'est pas chargé : ouvrez l'application une fois avec internet.");return}
     if(!P.nom){toast('Renseignez d’abord votre profil : il figure sur les courriers');view='profil';return go()}
@@ -1156,7 +1177,14 @@ function exportPhotos(v){
   if(!files.length){toast('Aucune photo dans cette visite');return}
   offer(dossier+'.zip',zip(files));
 }
-function exportJson(){offer(`sauvegarde_constats_${today()}.json`,new Blob([JSON.stringify({app:'constat-decence',v:2,visits,mairies:MAIRIES.l})],{type:'application/json'}))}
+function exportJson(){
+  const L=visits.filter(v=>exSel.has(v.id));
+  if(!L.length&&!exMairies){toast('Cochez au moins un dossier à exporter');return}
+  if(!L.length&&!Object.keys(MAIRIES.l).length){toast('Cochez au moins un dossier à exporter');return}
+  const nom=L.length===1?slug(who(L[0])):L.length?L.length+'_dossiers':'carnet_mairies';
+  offer(`sauvegarde_${nom}_${today()}.json`,new Blob([JSON.stringify({app:'constat-decence',v:2,visits:L,...(exMairies?{mairies:MAIRIES.l}:{})})],{type:'application/json'}));
+  toast(`${L.length} dossier${L.length>1?'s':''} exporté${L.length>1?'s':''}${exMairies?' avec le carnet des mairies':''}`);
+}
 async function importJson(el){
   const f=el.files[0];el.value='';if(!f)return;
   try{const d=JSON.parse(await f.text());if(d.app!=='constat-decence'||!Array.isArray(d.visits))throw new Error('ce fichier n’est pas une sauvegarde de cette application');
@@ -1467,7 +1495,9 @@ async function exportPdf(v){
     if(r.id==='r4')row([[tx('Installation de détecteur de fumée :',{b:1}),cbs(yn(f.detect))],[tx('CCH art. R.142-2',{sz:7.5,c:MUT})],[rt([['Nombre de détecteur de fumée : '],[f.detectNb,1]])],[]],IW);
     notes(r.id==='r3'?[2,3]:r.id==='r6'?(pdl?[3,4,5,6]:[3,4,5,6,7]):[3]);
   }
-  const travLines=t=>String(t||'').split('\n').map(l=>/^\d+\.\s/.test(l)?tx(l,{b:1,sz:9.5,c:ACC}):/^\s*◦/.test(l)?tx('-  '+l.replace(/^\s*◦\s*/,''),{ind:9}):/^\s*•/.test(l)?tx(l.trim(),{ind:3}):l.trim()?tx(l):gap(1.5));
+  // La phrase fixe des justificatifs s'insère avant la première catégorie de travaux (ou après le premier paragraphe).
+  const travLines=t=>{const L=String(t||'').split('\n');if(String(t||'').trim()){let i=L.findIndex(l=>/^\d+\.\s/.test(l));if(i<0)i=L.findIndex(l=>!l.trim());if(i<0)i=L.length;L.splice(i,0,'\u0000'+justifTexte(v),'')}
+    return L.map(l=>l.startsWith('\u0000')?tx(l.slice(1)):/^\d+\.\s/.test(l)?tx(l,{b:1,sz:9.5,c:ACC}):/^\s*◦/.test(l)?tx('-  '+l.replace(/^\s*◦\s*/,''),{ind:9}):/^\s*•/.test(l)?tx(l.trim(),{ind:3}):l.trim()?tx(l):gap(1.5))};
   if(pdl){
   /* --- permis de louer : travaux, contre-visite, signatures --- */
   need(40);
